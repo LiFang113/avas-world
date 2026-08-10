@@ -1,10 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const backendMode = supabaseUrl && supabaseAnonKey ? "supabase" : "local";
-const supabase = backendMode === "supabase" ? createClient(supabaseUrl, supabaseAnonKey) : null;
+export const backendMode = supabaseUrl && supabaseKey ? "supabase" : "local";
+const supabase = backendMode === "supabase" ? createClient(supabaseUrl, supabaseKey) : null;
 
 export const normalizeAccountName = name => (name || "").trim().toLowerCase();
 export const createUserId = () => "user_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
