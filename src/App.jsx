@@ -720,12 +720,75 @@ function CraftTab({ onEarnStars }) {
 const CHAT_AVATARS = ["🦄","🐱","🦋","🐬","🌸","🐰","🦊","🐼","🌈","⭐","🎀","🐝","🦩","🍓","🌺"];
 const CHAT_COLORS = ["#EC4899","#8B5CF6","#3B82F6","#059669","#F59E0B","#EF4444","#6366F1","#14B8A6","#F97316","#A855F7","#06B6D4","#E11D48","#7C3AED","#D946EF","#0EA5E9"];
 const CHAT_STICKERS = ["👋","😂","❤️","🎉","👍","✨","💕","🌟","😊","🤗","💪","🎨","📚","🦄","🌈"];
+const normalizeAccountName = name => name.trim().toLowerCase();
+const createUserId = () => "user_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
+const getStoredAccounts = async () => {
+  const result = await window.storage.get("ava-accounts");
+  return result?.value ? JSON.parse(result.value) : [];
+};
+const saveStoredAccounts = accounts => window.storage.set("ava-accounts", JSON.stringify(accounts));
+const upsertStoredAccount = async account => {
+  const accounts = await getStoredAccounts();
+  const nextAccount = { ...account, searchName: normalizeAccountName(account.name), updatedAt: Date.now() };
+  const existingIdx = accounts.findIndex(a => a.id === nextAccount.id || a.searchName === nextAccount.searchName);
+  const next = existingIdx >= 0 ? accounts.map((a, i) => i === existingIdx ? { ...a, ...nextAccount } : a) : [...accounts, nextAccount];
+  await saveStoredAccounts(next);
+  return nextAccount;
+};
 
-function ChatRoom() {
+function AccountSetup({ onCreate, title = "Create Account", subtitle = "Set up your profile to start Ava's World!" }) {
+  const [setupName, setSetupName] = useState("");
+  const [setupAge, setSetupAge] = useState("");
+  const [setupAvatar, setSetupAvatar] = useState("🦄");
+  const canCreate = setupName.trim() && Number(setupAge) > 0;
+  return (
+    <div>
+      <div style={{ textAlign: "center", padding: "20px 14px", background: "linear-gradient(135deg, #EDE9FE, #DDD6FE, #FDF2F8)", borderRadius: 18, marginBottom: 16 }}>
+        <div style={{ fontSize: 44, marginBottom: 6 }}>🌸</div>
+        <div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 20, fontWeight: 700, color: "#5B21B6" }}>{title}</div>
+        <div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 13, color: "#7C3AED", marginTop: 3 }}>{subtitle}</div>
+      </div>
+      <div style={{ background: "#FFF", borderRadius: 16, padding: 16, boxShadow: "0 2px 8px rgba(0,0,0,.04)" }}>
+        <div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 14, fontWeight: 600, color: "#1F2937", marginBottom: 8 }}>Pick your avatar:</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
+          {CHAT_AVATARS.map(a => (
+            <button key={a} onClick={() => setSetupAvatar(a)} style={{
+              width: 42, height: 42, borderRadius: 12, border: setupAvatar === a ? "3px solid #7C3AED" : "2px solid #E5E7EB",
+              background: setupAvatar === a ? "#EDE9FE" : "#FFF", fontSize: 22, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", transition: "all .2s",
+              transform: setupAvatar === a ? "scale(1.1)" : "scale(1)",
+            }}>{a}</button>
+          ))}
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 80px", gap: 8, marginBottom: 14 }}>
+          <div>
+            <div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 14, fontWeight: 600, color: "#1F2937", marginBottom: 6 }}>Name:</div>
+            <input value={setupName} onChange={e => setSetupName(e.target.value.slice(0, 18))} placeholder="Ava" style={{ width: "100%", padding: "10px 12px", borderRadius: 12, border: "2px solid #E5E7EB", fontFamily: "'Nunito',sans-serif", fontSize: 14, outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <div>
+            <div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 14, fontWeight: 600, color: "#1F2937", marginBottom: 6 }}>Age:</div>
+            <input value={setupAge} onChange={e => setSetupAge(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="8" inputMode="numeric" style={{ width: "100%", padding: "10px 12px", borderRadius: 12, border: "2px solid #E5E7EB", fontFamily: "'Nunito',sans-serif", fontSize: 14, outline: "none", boxSizing: "border-box", textAlign: "center" }} />
+          </div>
+        </div>
+        <button onClick={() => canCreate && onCreate({ name: setupName.trim(), age: Number(setupAge), avatar: setupAvatar })} disabled={!canCreate} style={{
+          width: "100%", padding: "12px", borderRadius: 12, border: "none", cursor: canCreate ? "pointer" : "default",
+          background: canCreate ? "linear-gradient(135deg, #A78BFA, #7C3AED)" : "#E5E7EB",
+          color: canCreate ? "#FFF" : "#9CA3AF",
+          fontFamily: "'Fredoka',sans-serif", fontSize: 15, fontWeight: 700,
+        }}>Create Account</button>
+      </div>
+    </div>
+  );
+}
+
+function ChatRoom({ account }) {
   const [nickname, setNickname] = useState(null);
   const [avatar, setAvatar] = useState("🦄");
-  const [setupName, setSetupName] = useState("");
-  const [setupAvatar, setSetupAvatar] = useState("🦄");
+  const [age, setAge] = useState(null);
+  const [friends, setFriends] = useState([]);
+  const [friendSearch, setFriendSearch] = useState("");
+  const [friendResults, setFriendResults] = useState([]);
+  const [friendNotice, setFriendNotice] = useState("");
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
@@ -734,7 +797,7 @@ function ChatRoom() {
   const scrollRef = useRef(null);
   const pollRef = useRef(null);
   const userColor = useRef(CHAT_COLORS[Math.floor(Math.random() * CHAT_COLORS.length)]);
-  const userId = useRef("user_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6));
+  const userId = useRef(account?.userId || createUserId());
 
   // Load saved profile
   useEffect(() => {
@@ -745,21 +808,63 @@ function ChatRoom() {
           const p = JSON.parse(profile.value);
           setNickname(p.name);
           setAvatar(p.avatar);
+          setAge(p.age || null);
+          setFriends(p.friends || []);
           userColor.current = p.color || CHAT_COLORS[0];
           userId.current = p.userId || userId.current;
+        } else if (account) {
+          setNickname(account.name);
+          setAvatar(account.avatar);
+          setAge(account.age || null);
+          setFriends(account.friends || []);
+          userColor.current = account.color || userColor.current;
+          userId.current = account.userId || userId.current;
         }
       } catch {}
       setLoading(false);
     })();
-  }, []);
+  }, [account]);
 
   // Save profile
-  const saveProfile = async (name, av) => {
-    const profile = { name, avatar: av, color: userColor.current, userId: userId.current };
-    try { await window.storage.set("chat-profile", JSON.stringify(profile)); } catch {}
+  const saveProfile = async (name, av, accountAge = age, accountFriends = friends) => {
+    const profile = { name, age: accountAge, avatar: av, color: userColor.current, userId: userId.current, friends: accountFriends };
+    try {
+      await window.storage.set("chat-profile", JSON.stringify(profile));
+      await upsertStoredAccount({ id: profile.userId, name, age: accountAge, avatar: av, color: profile.color });
+    } catch {}
     setNickname(name);
     setAvatar(av);
+    setAge(accountAge);
+    setFriends(accountFriends);
     window.dispatchEvent(new CustomEvent("ava-profile-created"));
+  };
+
+  const searchFriends = async () => {
+    const q = normalizeAccountName(friendSearch);
+    if (!q) { setFriendResults([]); return; }
+    try {
+      const friendIds = new Set(friends.map(f => f.id));
+      const accounts = await getStoredAccounts();
+      const matches = accounts.filter(a => a.id !== userId.current && !friendIds.has(a.id) && (a.searchName || normalizeAccountName(a.name || "")).includes(q)).slice(0, 5);
+      setFriendResults(matches);
+      setFriendNotice(matches.length ? "" : "No matching account found on this device yet.");
+    } catch {
+      setFriendNotice("Search is not available right now.");
+    }
+  };
+
+  const addFriend = async friend => {
+    const nextFriend = { id: friend.id, name: friend.name, age: friend.age, avatar: friend.avatar, color: friend.color };
+    const nextFriends = [...friends, nextFriend];
+    await saveProfile(nickname, avatar, age, nextFriends);
+    setFriendSearch("");
+    setFriendResults([]);
+    setFriendNotice(`${friend.name} added to friends!`);
+  };
+
+  const removeFriend = async friendId => {
+    const nextFriends = friends.filter(f => f.id !== friendId);
+    await saveProfile(nickname, avatar, age, nextFriends);
   };
 
   // Load messages
@@ -819,9 +924,9 @@ function ChatRoom() {
 
   // Send message
   const sendMessage = async (text) => {
-    if (!text.trim() || sending) return;
+    if (!text.trim() || sending || friends.length === 0) return;
     setSending(true);
-    const msg = {
+      const msg = {
       id: Date.now() + "_" + Math.random().toString(36).slice(2, 5),
       userId: userId.current,
       name: nickname,
@@ -829,6 +934,7 @@ function ChatRoom() {
       color: userColor.current,
       text: text.trim(),
       time: Date.now(),
+      recipientIds: friends.map(f => f.id),
     };
     try {
       const result = await window.storage.get("chatroom-messages", true);
@@ -856,52 +962,27 @@ function ChatRoom() {
   if (loading) return <div style={{ textAlign: "center", padding: 40 }}><div style={{ fontSize: 32, animation: "pulse 1s infinite" }}>💬</div><style>{`@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}`}</style></div>;
 
   if (!nickname) {
-    return (
-      <div>
-        <div style={{ textAlign: "center", padding: "20px 14px", background: "linear-gradient(135deg, #EDE9FE, #DDD6FE, #FDF2F8)", borderRadius: 18, marginBottom: 16 }}>
-          <div style={{ fontSize: 44, marginBottom: 6 }}>💬</div>
-          <div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 20, fontWeight: 700, color: "#5B21B6" }}>Chat Room</div>
-          <div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 13, color: "#7C3AED", marginTop: 3 }}>Set up your profile to chat with friends!</div>
-        </div>
-
-        <div style={{ background: "#FFF", borderRadius: 16, padding: 16, boxShadow: "0 2px 8px rgba(0,0,0,.04)" }}>
-          <div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 14, fontWeight: 600, color: "#1F2937", marginBottom: 8 }}>Pick your avatar:</div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 14 }}>
-            {CHAT_AVATARS.map(a => (
-              <button key={a} onClick={() => setSetupAvatar(a)} style={{
-                width: 42, height: 42, borderRadius: 12, border: setupAvatar === a ? "3px solid #7C3AED" : "2px solid #E5E7EB",
-                background: setupAvatar === a ? "#EDE9FE" : "#FFF", fontSize: 22, cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center", transition: "all .2s",
-                transform: setupAvatar === a ? "scale(1.1)" : "scale(1)",
-              }}>{a}</button>
-            ))}
-          </div>
-
-          <div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 14, fontWeight: 600, color: "#1F2937", marginBottom: 6 }}>Your nickname:</div>
-          <input
-            value={setupName} onChange={e => setSetupName(e.target.value.slice(0, 15))}
-            placeholder="Enter a fun name..."
-            style={{ width: "100%", padding: "10px 14px", borderRadius: 12, border: "2px solid #E5E7EB", fontFamily: "'Nunito',sans-serif", fontSize: 14, outline: "none", marginBottom: 14, boxSizing: "border-box" }}
-          />
-
-          <button onClick={() => { if (setupName.trim()) saveProfile(setupName.trim(), setupAvatar); }} disabled={!setupName.trim()} style={{
-            width: "100%", padding: "12px", borderRadius: 12, border: "none", cursor: setupName.trim() ? "pointer" : "default",
-            background: setupName.trim() ? "linear-gradient(135deg, #A78BFA, #7C3AED)" : "#E5E7EB",
-            color: setupName.trim() ? "#FFF" : "#9CA3AF",
-            fontFamily: "'Fredoka',sans-serif", fontSize: 15, fontWeight: 700,
-          }}>🚀 Join Chat Room!</button>
-        </div>
-      </div>
-    );
+    return <AccountSetup onCreate={({ name, age: nextAge, avatar: nextAvatar }) => saveProfile(name, nextAvatar, nextAge, [])} title="Create Account" subtitle="Add your name and age to chat with friends!" />;
   }
 
   // Chat view
   const isMe = (msg) => msg.userId === userId.current;
+  const friendIds = new Set(friends.map(f => f.id));
+  const visibleMessages = messages.filter(msg => {
+    const sentByFriend = friendIds.has(msg.userId);
+    const sentByMe = msg.userId === userId.current;
+    const sentToMe = !msg.recipientIds || msg.recipientIds.includes(userId.current);
+    return sentByMe || (sentByFriend && sentToMe);
+  });
+  const canChat = friends.length > 0;
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 140px)", marginBottom: -12 }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", flexShrink: 0 }}>
-        <div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 15, fontWeight: 700, color: "#1F2937" }}>💬 Chat Room</div>
+        <div>
+          <div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 15, fontWeight: 700, color: "#1F2937" }}>💬 Chat Room</div>
+          <div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 9, color: "#9CA3AF" }}>{avatar} {nickname}{age ? `, ${age}` : ""}</div>
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
           {onlineUsers.slice(0, 5).map((u, i) => (
             <div key={i} title={u.name} style={{ width: 24, height: 24, borderRadius: 12, background: u.color + "20", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, marginLeft: i > 0 ? -6 : 0, border: "2px solid #FFF", position: "relative", zIndex: 5 - i }}>{u.avatar}</div>
@@ -910,6 +991,41 @@ function ChatRoom() {
             {onlineUsers.length > 0 ? `${onlineUsers.length} online` : ""}
           </span>
         </div>
+      </div>
+
+      {/* Friends */}
+      <div style={{ background: "#FFF", borderRadius: 12, padding: 8, marginBottom: 6, boxShadow: "0 1px 4px rgba(0,0,0,.03)", flexShrink: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <span style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 12, fontWeight: 700, color: "#1F2937" }}>Friends</span>
+          <span style={{ fontFamily: "'Nunito',sans-serif", fontSize: 10, color: "#9CA3AF" }}>{friends.length}</span>
+        </div>
+        {friends.length > 0 && (
+          <div style={{ display: "flex", gap: 5, overflowX: "auto", paddingBottom: 6 }}>
+            {friends.map(f => (
+              <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 7px", borderRadius: 8, background: (f.color || "#7C3AED") + "14", flexShrink: 0 }}>
+                <span style={{ fontSize: 13 }}>{f.avatar}</span>
+                <span style={{ fontFamily: "'Nunito',sans-serif", fontSize: 10, color: f.color || "#7C3AED", fontWeight: 700 }}>{f.name}</span>
+                <button onClick={() => removeFriend(f.id)} style={{ border: "none", background: "transparent", color: "#9CA3AF", cursor: "pointer", fontSize: 10, padding: 0 }}>×</button>
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{ display: "flex", gap: 5 }}>
+          <input value={friendSearch} onChange={e => setFriendSearch(e.target.value)} onKeyDown={e => e.key === "Enter" && searchFriends()} placeholder="Search by name..." style={{ flex: 1, padding: "7px 9px", borderRadius: 9, border: "1px solid #E5E7EB", fontFamily: "'Nunito',sans-serif", fontSize: 11, outline: "none" }} />
+          <button onClick={searchFriends} style={{ ...BS, padding: "7px 10px", fontSize: 10, background: "linear-gradient(135deg,#A78BFA,#7C3AED)", color: "#FFF" }}>Search</button>
+        </div>
+        {friendNotice && <div style={{ marginTop: 5, fontFamily: "'Nunito',sans-serif", fontSize: 10, color: "#059669" }}>{friendNotice}</div>}
+        {friendResults.length > 0 && (
+          <div style={{ marginTop: 6, display: "flex", flexDirection: "column", gap: 5 }}>
+            {friendResults.map(f => (
+              <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 8px", borderRadius: 9, background: "#F9FAFB" }}>
+                <span style={{ fontSize: 16 }}>{f.avatar}</span>
+                <span style={{ flex: 1, fontFamily: "'Nunito',sans-serif", fontSize: 11, color: "#1F2937" }}>{f.name}{f.age ? `, ${f.age}` : ""}</span>
+                <button onClick={() => addFriend(f)} style={{ ...BS, padding: "5px 9px", fontSize: 10, background: "#ECFDF5", color: "#059669" }}>Add</button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Online users bar */}
@@ -927,16 +1043,16 @@ function ChatRoom() {
 
       {/* Messages */}
       <div ref={scrollRef} style={{ flex: 1, overflowY: "auto", WebkitOverflowScrolling: "touch", padding: "6px 0", display: "flex", flexDirection: "column", gap: 6 }}>
-        {messages.length === 0 && (
+        {visibleMessages.length === 0 && (
           <div style={{ textAlign: "center", padding: 30 }}>
             <div style={{ fontSize: 36 }}>👋</div>
-            <div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 15, color: "#9CA3AF", marginTop: 6 }}>No messages yet!</div>
-            <div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 12, color: "#D1D5DB", marginTop: 2 }}>Send the first message to start chatting 💬</div>
+            <div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 15, color: "#9CA3AF", marginTop: 6 }}>{friends.length ? "No messages yet!" : "Add a friend to start chatting!"}</div>
+            <div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 12, color: "#D1D5DB", marginTop: 2 }}>{friends.length ? "Send the first message to your friends 💬" : "Search for another account by name."}</div>
           </div>
         )}
-        {messages.map((msg, i) => {
+        {visibleMessages.map((msg, i) => {
           const me = isMe(msg);
-          const showAvatar = i === 0 || messages[i - 1].userId !== msg.userId;
+          const showAvatar = i === 0 || visibleMessages[i - 1].userId !== msg.userId;
           return (
             <div key={msg.id || i}>
               {showAvatar && !me && (
@@ -974,9 +1090,9 @@ function ChatRoom() {
       {/* Sticker bar */}
       <div style={{ display: "flex", gap: 3, padding: "4px 0", overflowX: "auto", flexShrink: 0 }}>
         {CHAT_STICKERS.map((s, i) => (
-          <button key={i} onClick={() => sendMessage(s)} style={{
+          <button key={i} onClick={() => sendMessage(s)} disabled={!canChat} style={{
             width: 32, height: 32, borderRadius: 8, border: "1px solid #E5E7EB", background: "#FFF",
-            fontSize: 15, cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 15, cursor: canChat ? "pointer" : "default", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", opacity: canChat ? 1 : .45,
           }}>{s}</button>
         ))}
       </div>
@@ -987,13 +1103,13 @@ function ChatRoom() {
         <input
           value={input} onChange={e => setInput(e.target.value.slice(0, 200))}
           onKeyDown={e => e.key === "Enter" && sendMessage(input)}
-          placeholder="Type a message..."
+          placeholder={canChat ? "Type a message..." : "Add a friend first..."}
           style={{ flex: 1, padding: "8px 12px", borderRadius: 12, border: "2px solid #E5E7EB", fontFamily: "'Nunito',sans-serif", fontSize: 13, outline: "none", boxSizing: "border-box" }}
         />
-        <button onClick={() => sendMessage(input)} disabled={!input.trim() || sending} style={{
-          padding: "8px 14px", borderRadius: 12, border: "none", cursor: input.trim() ? "pointer" : "default",
-          background: input.trim() ? `linear-gradient(135deg, ${userColor.current}, ${userColor.current}CC)` : "#E5E7EB",
-          color: input.trim() ? "#FFF" : "#9CA3AF",
+        <button onClick={() => sendMessage(input)} disabled={!input.trim() || sending || !canChat} style={{
+          padding: "8px 14px", borderRadius: 12, border: "none", cursor: input.trim() && canChat ? "pointer" : "default",
+          background: input.trim() && canChat ? `linear-gradient(135deg, ${userColor.current}, ${userColor.current}CC)` : "#E5E7EB",
+          color: input.trim() && canChat ? "#FFF" : "#9CA3AF",
           fontFamily: "'Fredoka',sans-serif", fontSize: 13, fontWeight: 600, flexShrink: 0,
         }}>Send</button>
       </div>
@@ -1057,6 +1173,7 @@ export default function AvasWorld() {
   const [loadingVideo, setLoadingVideo] = useState(null);
   const [dataLoaded, setDataLoaded] = useState(false);
   const [hasAccount, setHasAccount] = useState(false);
+  const [account, setAccount] = useState(null);
 
   // ─── LOAD SAVED DATA ON MOUNT ──────────────────────────────────────
   useEffect(() => {
@@ -1065,6 +1182,13 @@ export default function AvasWorld() {
         const profile = await window.storage.get("chat-profile");
         const accountExists = Boolean(profile?.value);
         setHasAccount(accountExists);
+        if (accountExists) {
+          const savedProfile = JSON.parse(profile.value);
+          setAccount(savedProfile);
+          if (savedProfile.name && savedProfile.userId) {
+            await upsertStoredAccount({ id: savedProfile.userId, name: savedProfile.name, age: savedProfile.age, avatar: savedProfile.avatar, color: savedProfile.color });
+          }
+        }
         if (accountExists) {
           const result = await window.storage.get("ava-world-data");
           if (result && result.value) {
@@ -1089,10 +1213,34 @@ export default function AvasWorld() {
   }, []);
 
   useEffect(() => {
-    const handleProfileCreated = () => setHasAccount(true);
+    const handleProfileCreated = async () => {
+      try {
+        const profile = await window.storage.get("chat-profile");
+        if (profile?.value) setAccount(JSON.parse(profile.value));
+      } catch {}
+      setHasAccount(true);
+    };
     window.addEventListener("ava-profile-created", handleProfileCreated);
     return () => window.removeEventListener("ava-profile-created", handleProfileCreated);
   }, []);
+
+  const createAccount = async ({ name, age, avatar }) => {
+    const profile = {
+      name,
+      age,
+      avatar,
+      color: CHAT_COLORS[Math.floor(Math.random() * CHAT_COLORS.length)],
+      userId: createUserId(),
+      friends: [],
+    };
+    try {
+      await window.storage.set("chat-profile", JSON.stringify(profile));
+      await upsertStoredAccount({ id: profile.userId, name, age, avatar, color: profile.color });
+    } catch {}
+    setAccount(profile);
+    setHasAccount(true);
+    window.dispatchEvent(new CustomEvent("ava-profile-created"));
+  };
 
   // ─── AUTO-SAVE WHEN DATA CHANGES ──────────────────────────────────
   useEffect(() => {
@@ -1349,7 +1497,7 @@ export default function AvasWorld() {
       case 1: return RewardTab();
       case 2: return StudyTab();
       case 3: return DiaryTab();
-      case 4: return <ChatRoom />;
+      case 4: return <ChatRoom account={account} />;
       case 5: return NewsTab();
       case 6: return ChineseTab();
       case 7: return GamesTab();
@@ -1363,6 +1511,15 @@ export default function AvasWorld() {
       <div style={{ fontSize: 48, marginBottom: 12 }}>🌸</div>
       <div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 22, fontWeight: 700, color: "#FFF" }}>Ava's World</div>
       <div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 12, color: "rgba(255,255,255,.7)", marginTop: 4 }}>Loading your stuff...</div>
+    </div>
+  );
+
+  if (!hasAccount) return (
+    <div style={S.app}>
+      <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet" />
+      <div style={S.content}>
+        <AccountSetup onCreate={createAccount} />
+      </div>
     </div>
   );
 
