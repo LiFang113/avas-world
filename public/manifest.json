@@ -1,0 +1,14 @@
+{
+  "name": "Ava's World",
+  "short_name": "Ava's World",
+  "description": "Ava's learning companion",
+  "start_url": "/avas-world/",
+  "display": "standalone",
+  "background_color": "#7C3AED",
+  "theme_color": "#7C3AED",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/avas-world/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/avas-world/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
