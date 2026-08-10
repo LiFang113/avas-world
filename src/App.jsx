@@ -759,6 +759,7 @@ function ChatRoom() {
     try { await window.storage.set("chat-profile", JSON.stringify(profile)); } catch {}
     setNickname(name);
     setAvatar(av);
+    window.dispatchEvent(new CustomEvent("ava-profile-created"));
   };
 
   // Load messages
@@ -1007,7 +1008,7 @@ export default function AvasWorld() {
   const [activeTab, setActiveTab] = useState(0);
   const [selectedDay, setSelectedDay] = useState(DAYS[new Date().getDay()]);
   const [completedTasks, setCompletedTasks] = useState({});
-  const [totalStars, setTotalStars] = useState(45);
+  const [totalStars, setTotalStars] = useState(0);
   const [showStarAnim, setShowStarAnim] = useState(null);
   const [activeGame, setActiveGame] = useState(null);
   const [selectedGameTheme, setSelectedGameTheme] = useState("🌸 Cherry Blossom");
@@ -1055,23 +1056,29 @@ export default function AvasWorld() {
   const [onlineResults, setOnlineResults] = useState([]);
   const [loadingVideo, setLoadingVideo] = useState(null);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [hasAccount, setHasAccount] = useState(false);
 
   // ─── LOAD SAVED DATA ON MOUNT ──────────────────────────────────────
   useEffect(() => {
     const load = async () => {
       try {
-        const result = await window.storage.get("ava-world-data");
-        if (result && result.value) {
-          const d = JSON.parse(result.value);
-          if (d.totalStars !== undefined) setTotalStars(d.totalStars);
-          if (d.completedTasks) setCompletedTasks(d.completedTasks);
-          if (d.unlockedItems) setUnlockedItems(d.unlockedItems);
-          if (d.loveLog) setLoveLog(d.loveLog);
-          if (d.diaryEntries) setDiaryEntries(d.diaryEntries);
-          if (d.rewards) setRewards(d.rewards);
-          if (d.claimedRewards) setClaimedRewards(d.claimedRewards);
-          if (d.songs) setSongs(d.songs);
-          if (d.charIndex !== undefined) setCharIndex(d.charIndex);
+        const profile = await window.storage.get("chat-profile");
+        const accountExists = Boolean(profile?.value);
+        setHasAccount(accountExists);
+        if (accountExists) {
+          const result = await window.storage.get("ava-world-data");
+          if (result && result.value) {
+            const d = JSON.parse(result.value);
+            if (d.totalStars !== undefined) setTotalStars(d.totalStars);
+            if (d.completedTasks) setCompletedTasks(d.completedTasks);
+            if (d.unlockedItems) setUnlockedItems(d.unlockedItems);
+            if (d.loveLog) setLoveLog(d.loveLog);
+            if (d.diaryEntries) setDiaryEntries(d.diaryEntries);
+            if (d.rewards) setRewards(d.rewards);
+            if (d.claimedRewards) setClaimedRewards(d.claimedRewards);
+            if (d.songs) setSongs(d.songs);
+            if (d.charIndex !== undefined) setCharIndex(d.charIndex);
+          }
         }
       } catch (e) {
         // First time or storage unavailable — use defaults
@@ -1081,9 +1088,15 @@ export default function AvasWorld() {
     load();
   }, []);
 
+  useEffect(() => {
+    const handleProfileCreated = () => setHasAccount(true);
+    window.addEventListener("ava-profile-created", handleProfileCreated);
+    return () => window.removeEventListener("ava-profile-created", handleProfileCreated);
+  }, []);
+
   // ─── AUTO-SAVE WHEN DATA CHANGES ──────────────────────────────────
   useEffect(() => {
-    if (!dataLoaded) return;
+    if (!dataLoaded || !hasAccount) return;
     const save = async () => {
       try {
         await window.storage.set("ava-world-data", JSON.stringify({
@@ -1093,7 +1106,7 @@ export default function AvasWorld() {
       } catch (e) { /* storage unavailable */ }
     };
     save();
-  }, [dataLoaded, totalStars, completedTasks, unlockedItems, loveLog, diaryEntries, rewards, claimedRewards, songs, charIndex]);
+  }, [dataLoaded, hasAccount, totalStars, completedTasks, unlockedItems, loveLog, diaryEntries, rewards, claimedRewards, songs, charIndex]);
 
   const now = new Date();
   const greetingTime = now.getHours() < 12 ? "Good Morning" : now.getHours() < 17 ? "Good Afternoon" : "Good Evening";
