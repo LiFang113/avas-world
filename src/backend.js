@@ -1,0 +1,176 @@
+import { createClient } from "@supabase/supabase-js";
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const backendMode = supabaseUrl && supabaseAnonKey ? "supabase" : "local";
+const supabase = backendMode === "supabase" ? createClient(supabaseUrl, supabaseAnonKey) : null;
+
+export const normalizeAccountName = name => (name || "").trim().toLowerCase();
+export const createUserId = () => "user_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+
+const readLocalJson = key => {
+  try {
+    const value = window.localStorage?.getItem(key);
+    return value ? JSON.parse(value) : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeLocalJson = (key, value) => {
+  try {
+    window.localStorage?.setItem(key, JSON.stringify(value));
+  } catch {}
+};
+
+const accountToRow = account => ({
+  id: account.id || account.userId,
+  name: account.name,
+  search_name: normalizeAccountName(account.name),
+  age: account.age || null,
+  avatar: account.avatar,
+  color: account.color,
+  updated_at: new Date().toISOString(),
+});
+
+const rowToAccount = row => ({
+  id: row.id,
+  userId: row.id,
+  name: row.name,
+  searchName: row.search_name,
+  age: row.age,
+  avatar: row.avatar,
+  color: row.color,
+});
+
+const getLocalAccounts = () => readLocalJson("ava-accounts") || [];
+
+const saveLocalAccount = account => {
+  const nextAccount = { ...account, id: account.id || account.userId, searchName: normalizeAccountName(account.name), updatedAt: Date.now() };
+  const accounts = getLocalAccounts();
+  const idx = accounts.findIndex(a => a.id === nextAccount.id || a.searchName === nextAccount.searchName);
+  const next = idx >= 0 ? accounts.map((a, i) => i === idx ? { ...a, ...nextAccount } : a) : [...accounts, nextAccount];
+  writeLocalJson("ava-accounts", next);
+  return nextAccount;
+};
+
+export const saveAccount = async account => {
+  const localAccount = saveLocalAccount(account);
+  if (!supabase) return localAccount;
+  const { error } = await supabase.from("ava_accounts").upsert(accountToRow(account));
+  if (error) throw error;
+  return localAccount;
+};
+
+export const searchAccounts = async (query, currentUserId, friendIds = []) => {
+  const q = normalizeAccountName(query);
+  if (!q) return [];
+  const friendSet = new Set(friendIds);
+
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("ava_accounts")
+      .select("id,name,search_name,age,avatar,color")
+      .ilike("search_name", `%${q}%`)
+      .neq("id", currentUserId)
+      .limit(8);
+    if (error) throw error;
+    return (data || []).map(rowToAccount).filter(a => !friendSet.has(a.id));
+  }
+
+  return getLocalAccounts()
+    .filter(a => a.id !== currentUserId && !friendSet.has(a.id) && (a.searchName || normalizeAccountName(a.name)).includes(q))
+    .slice(0, 8);
+};
+
+export const loadFriends = async userId => {
+  if (!supabase) return null;
+  const { data: links, error } = await supabase.from("ava_friendships").select("friend_id").eq("owner_id", userId);
+  if (error) throw error;
+  const friendIds = (links || []).map(link => link.friend_id);
+  if (friendIds.length === 0) return [];
+  const { data: accounts, error: accountError } = await supabase
+    .from("ava_accounts")
+    .select("id,name,search_name,age,avatar,color")
+    .in("id", friendIds);
+  if (accountError) throw accountError;
+  return (accounts || []).map(rowToAccount);
+};
+
+export const saveFriends = async (userId, friends) => {
+  if (!supabase) return;
+  const { error: deleteError } = await supabase.from("ava_friendships").delete().eq("owner_id", userId);
+  if (deleteError) throw deleteError;
+  if (friends.length === 0) return;
+  const rows = friends.map(friend => ({ owner_id: userId, friend_id: friend.id }));
+  const { error } = await supabase.from("ava_friendships").insert(rows);
+  if (error) throw error;
+};
+
+const rowToMessage = row => ({
+  id: row.id,
+  userId: row.user_id,
+  name: row.name,
+  avatar: row.avatar,
+  color: row.color,
+  text: row.text,
+  time: Number(row.sent_at_ms),
+  recipientIds: row.recipient_ids || [],
+});
+
+export const loadChatMessages = async userId => {
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("ava_messages")
+      .select("id,user_id,name,avatar,color,text,sent_at_ms,recipient_ids")
+      .order("sent_at_ms", { ascending: false })
+      .limit(150);
+    if (error) throw error;
+    return (data || []).map(rowToMessage).reverse().filter(msg => msg.userId === userId || (msg.recipientIds || []).includes(userId));
+  }
+
+  const local = readLocalJson("chatroom-messages") || { messages: [] };
+  return local.messages || [];
+};
+
+export const sendChatMessage = async msg => {
+  if (supabase) {
+    const { error } = await supabase.from("ava_messages").insert({
+      id: msg.id,
+      user_id: msg.userId,
+      name: msg.name,
+      avatar: msg.avatar,
+      color: msg.color,
+      text: msg.text,
+      sent_at_ms: msg.time,
+      recipient_ids: msg.recipientIds || [],
+    });
+    if (error) throw error;
+    return;
+  }
+
+  const local = readLocalJson("chatroom-messages") || { messages: [] };
+  local.messages = [...(local.messages || []), msg].slice(-100);
+  writeLocalJson("chatroom-messages", local);
+};
+
+export const updatePresence = async account => {
+  if (!supabase) return [];
+  const now = Date.now();
+  const { error } = await supabase.from("ava_presence").upsert({
+    user_id: account.userId,
+    name: account.name,
+    avatar: account.avatar,
+    color: account.color,
+    last_seen_ms: now,
+  });
+  if (error) throw error;
+
+  const { data, error: readError } = await supabase
+    .from("ava_presence")
+    .select("user_id,name,avatar,color,last_seen_ms")
+    .gt("last_seen_ms", now - 30000);
+  if (readError) throw readError;
+  return (data || []).map(row => ({ id: row.user_id, name: row.name, avatar: row.avatar, color: row.color, lastSeen: Number(row.last_seen_ms) }));
+};

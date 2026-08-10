@@ -1,4 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  backendMode,
+  createUserId,
+  loadChatMessages,
+  loadFriends,
+  normalizeAccountName,
+  saveAccount,
+  saveFriends,
+  searchAccounts,
+  sendChatMessage,
+  updatePresence,
+} from "./backend.js";
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // CONSTANTS
@@ -720,21 +732,6 @@ function CraftTab({ onEarnStars }) {
 const CHAT_AVATARS = ["🦄","🐱","🦋","🐬","🌸","🐰","🦊","🐼","🌈","⭐","🎀","🐝","🦩","🍓","🌺"];
 const CHAT_COLORS = ["#EC4899","#8B5CF6","#3B82F6","#059669","#F59E0B","#EF4444","#6366F1","#14B8A6","#F97316","#A855F7","#06B6D4","#E11D48","#7C3AED","#D946EF","#0EA5E9"];
 const CHAT_STICKERS = ["👋","😂","❤️","🎉","👍","✨","💕","🌟","😊","🤗","💪","🎨","📚","🦄","🌈"];
-const normalizeAccountName = name => name.trim().toLowerCase();
-const createUserId = () => "user_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6);
-const getStoredAccounts = async () => {
-  const result = await window.storage.get("ava-accounts");
-  return result?.value ? JSON.parse(result.value) : [];
-};
-const saveStoredAccounts = accounts => window.storage.set("ava-accounts", JSON.stringify(accounts));
-const upsertStoredAccount = async account => {
-  const accounts = await getStoredAccounts();
-  const nextAccount = { ...account, searchName: normalizeAccountName(account.name), updatedAt: Date.now() };
-  const existingIdx = accounts.findIndex(a => a.id === nextAccount.id || a.searchName === nextAccount.searchName);
-  const next = existingIdx >= 0 ? accounts.map((a, i) => i === existingIdx ? { ...a, ...nextAccount } : a) : [...accounts, nextAccount];
-  await saveStoredAccounts(next);
-  return nextAccount;
-};
 
 function AccountSetup({ onCreate, title = "Create Account", subtitle = "Set up your profile to start Ava's World!" }) {
   const [setupName, setSetupName] = useState("");
@@ -809,14 +806,16 @@ function ChatRoom({ account }) {
           setNickname(p.name);
           setAvatar(p.avatar);
           setAge(p.age || null);
-          setFriends(p.friends || []);
+          const backendFriends = await loadFriends(p.userId || userId.current);
+          setFriends(backendFriends || p.friends || []);
           userColor.current = p.color || CHAT_COLORS[0];
           userId.current = p.userId || userId.current;
         } else if (account) {
           setNickname(account.name);
           setAvatar(account.avatar);
           setAge(account.age || null);
-          setFriends(account.friends || []);
+          const backendFriends = await loadFriends(account.userId || userId.current);
+          setFriends(backendFriends || account.friends || []);
           userColor.current = account.color || userColor.current;
           userId.current = account.userId || userId.current;
         }
@@ -830,7 +829,8 @@ function ChatRoom({ account }) {
     const profile = { name, age: accountAge, avatar: av, color: userColor.current, userId: userId.current, friends: accountFriends };
     try {
       await window.storage.set("chat-profile", JSON.stringify(profile));
-      await upsertStoredAccount({ id: profile.userId, name, age: accountAge, avatar: av, color: profile.color });
+      await saveAccount({ id: profile.userId, userId: profile.userId, name, age: accountAge, avatar: av, color: profile.color });
+      await saveFriends(profile.userId, accountFriends);
     } catch {}
     setNickname(name);
     setAvatar(av);
@@ -843,11 +843,9 @@ function ChatRoom({ account }) {
     const q = normalizeAccountName(friendSearch);
     if (!q) { setFriendResults([]); return; }
     try {
-      const friendIds = new Set(friends.map(f => f.id));
-      const accounts = await getStoredAccounts();
-      const matches = accounts.filter(a => a.id !== userId.current && !friendIds.has(a.id) && (a.searchName || normalizeAccountName(a.name || "")).includes(q)).slice(0, 5);
+      const matches = await searchAccounts(q, userId.current, friends.map(f => f.id));
       setFriendResults(matches);
-      setFriendNotice(matches.length ? "" : "No matching account found on this device yet.");
+      setFriendNotice(matches.length ? "" : backendMode === "supabase" ? "No matching account found." : "No matching account found on this device yet.");
     } catch {
       setFriendNotice("Search is not available right now.");
     }
@@ -870,12 +868,8 @@ function ChatRoom({ account }) {
   // Load messages
   const loadMessages = useCallback(async () => {
     try {
-      const result = await window.storage.get("chatroom-messages", true);
-      if (result?.value) {
-        const parsed = JSON.parse(result.value);
-        setMessages(parsed.messages || []);
-        setOnlineUsers(parsed.users || []);
-      }
+      const backendMessages = await loadChatMessages(userId.current);
+      setMessages(backendMessages);
     } catch {}
   }, []);
 
@@ -887,13 +881,8 @@ function ChatRoom({ account }) {
     // Register presence
     (async () => {
       try {
-        const result = await window.storage.get("chatroom-messages", true);
-        const data = result?.value ? JSON.parse(result.value) : { messages: [], users: [] };
-        const now = Date.now();
-        const users = (data.users || []).filter(u => now - u.lastSeen < 30000 && u.id !== userId.current);
-        users.push({ id: userId.current, name: nickname, avatar, color: userColor.current, lastSeen: now });
-        data.users = users;
-        await window.storage.set("chatroom-messages", JSON.stringify(data), true);
+        const users = await updatePresence({ userId: userId.current, name: nickname, avatar, color: userColor.current });
+        setOnlineUsers(users);
       } catch {}
     })();
     return () => clearInterval(pollRef.current);
@@ -909,13 +898,7 @@ function ChatRoom({ account }) {
     if (!nickname) return;
     const hb = setInterval(async () => {
       try {
-        const result = await window.storage.get("chatroom-messages", true);
-        const data = result?.value ? JSON.parse(result.value) : { messages: [], users: [] };
-        const now = Date.now();
-        const users = (data.users || []).filter(u => now - u.lastSeen < 30000 && u.id !== userId.current);
-        users.push({ id: userId.current, name: nickname, avatar, color: userColor.current, lastSeen: now });
-        data.users = users;
-        await window.storage.set("chatroom-messages", JSON.stringify(data), true);
+        const users = await updatePresence({ userId: userId.current, name: nickname, avatar, color: userColor.current });
         setOnlineUsers(users);
       } catch {}
     }, 10000);
@@ -937,11 +920,8 @@ function ChatRoom({ account }) {
       recipientIds: friends.map(f => f.id),
     };
     try {
-      const result = await window.storage.get("chatroom-messages", true);
-      const data = result?.value ? JSON.parse(result.value) : { messages: [], users: [] };
-      data.messages = [...(data.messages || []), msg].slice(-100); // keep last 100
-      await window.storage.set("chatroom-messages", JSON.stringify(data), true);
-      setMessages(data.messages);
+      await sendChatMessage(msg);
+      setMessages(prev => [...prev, msg].slice(-100));
       setInput("");
     } catch { setMessages(prev => [...prev, msg]); setInput(""); }
     setSending(false);
@@ -1186,7 +1166,7 @@ export default function AvasWorld() {
           const savedProfile = JSON.parse(profile.value);
           setAccount(savedProfile);
           if (savedProfile.name && savedProfile.userId) {
-            await upsertStoredAccount({ id: savedProfile.userId, name: savedProfile.name, age: savedProfile.age, avatar: savedProfile.avatar, color: savedProfile.color });
+            await saveAccount({ id: savedProfile.userId, userId: savedProfile.userId, name: savedProfile.name, age: savedProfile.age, avatar: savedProfile.avatar, color: savedProfile.color });
           }
         }
         if (accountExists) {
@@ -1235,7 +1215,8 @@ export default function AvasWorld() {
     };
     try {
       await window.storage.set("chat-profile", JSON.stringify(profile));
-      await upsertStoredAccount({ id: profile.userId, name, age, avatar, color: profile.color });
+      await saveAccount({ id: profile.userId, userId: profile.userId, name, age, avatar, color: profile.color });
+      await saveFriends(profile.userId, []);
     } catch {}
     setAccount(profile);
     setHasAccount(true);
@@ -1265,6 +1246,7 @@ export default function AvasWorld() {
   const motivMsg = MOTIVATIONAL_MSGS[now.getDate() % MOTIVATIONAL_MSGS.length];
   const todayDateKey = makeDateKey(now);
   const todayLove = loveLog[todayDateKey] || { kisses: 0, loveyous: 0 };
+  const accountInitial = (account?.name || "A").trim().charAt(0).toUpperCase() || "A";
 
   const spendStars = cost => { if (totalStars >= cost) { setTotalStars(s => s - cost); return true; } return false; };
   const toggleTask = (day, idx) => { const key = `${day}-${idx}`; const was = completedTasks[key]; setCompletedTasks(p => ({ ...p, [key]: !p[key] })); if (!was) { const t = STUDY_SCHEDULE[day]?.[idx]; if (t) addStars(t.stars); } };
@@ -1528,7 +1510,7 @@ export default function AvasWorld() {
       <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet" />
       {showStarAnim && <FloatingStars key={"star-"+showStarAnim} count={showStarAnim} onDone={() => setShowStarAnim(null)} />}
       {showChat && <AiChat onClose={() => setShowChat(false)} />}
-      <div style={S.topBar}><div style={{ display: "flex", alignItems: "center", gap: 7 }}><div style={S.avatar}>A</div><div><div style={{ fontFamily: "'Fredoka',sans-serif", fontWeight: 700, fontSize: 15, color: "#1F2937" }}>Ava's World</div><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 9, color: "#9CA3AF" }}>Daily companion 🌸</div></div></div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 13, fontWeight: 700, color: "#FBBF24", padding: "3px 9px", background: "#FFFBEB", borderRadius: 7 }}>⭐{totalStars}</div></div>
+      <div style={S.topBar}><div style={{ display: "flex", alignItems: "center", gap: 7 }}><div style={S.avatar}>{accountInitial}</div><div><div style={{ fontFamily: "'Fredoka',sans-serif", fontWeight: 700, fontSize: 15, color: "#1F2937" }}>Ava's World</div><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 9, color: "#9CA3AF" }}>Daily companion 🌸</div></div></div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 13, fontWeight: 700, color: "#FBBF24", padding: "3px 9px", background: "#FFFBEB", borderRadius: 7 }}>⭐{totalStars}</div></div>
       <div style={S.content}>{renderTab()}</div>
       <button onClick={() => setShowChat(true)} style={{ position: "fixed", bottom: 58, right: 14, width: 44, height: 44, borderRadius: 22, background: "linear-gradient(135deg,#7C3AED,#A78BFA)", border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(124,58,237,.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, zIndex: 100 }}>🤖</button>
       <div style={S.bottomNav}>
