@@ -408,6 +408,105 @@ function CharacterPractice({char,strokeCount,strokeNames}){
 }
 const BS={padding:"7px 14px",borderRadius:9,border:"none",fontFamily:"'Fredoka',sans-serif",fontSize:12,fontWeight:600,cursor:"pointer"};
 
+const DRAWING_COLORS = ["#111827","#EF4444","#F97316","#FBBF24","#22C55E","#14B8A6","#3B82F6","#8B5CF6","#EC4899","#FFFFFF"];
+const DRAWING_TEMPLATES = [
+  {id:"flower",name:"Garden Flower",tags:["flower","garden","spring","plant","nature"],regions:[["stem","path",{d:"M160 210 C160 176 160 150 160 124"}],["leaf1","ellipse",{cx:137,cy:165,rx:24,ry:12,transform:"rotate(-28 137 165)"}],["leaf2","ellipse",{cx:184,cy:154,rx:24,ry:12,transform:"rotate(28 184 154)"}],["petal1","ellipse",{cx:160,cy:78,rx:24,ry:39}],["petal2","ellipse",{cx:120,cy:110,rx:24,ry:39,transform:"rotate(-62 120 110)"}],["petal3","ellipse",{cx:200,cy:110,rx:24,ry:39,transform:"rotate(62 200 110)"}],["petal4","ellipse",{cx:135,cy:130,rx:24,ry:39,transform:"rotate(135 135 130)"}],["petal5","ellipse",{cx:185,cy:130,rx:24,ry:39,transform:"rotate(-135 185 130)"}],["center","circle",{cx:160,cy:112,r:22}]]},
+  {id:"rainbow",name:"Happy Rainbow",tags:["rainbow","color","sky","happy","weather"],regions:[["arc1","path",{d:"M54 184 A106 106 0 0 1 266 184"}],["arc2","path",{d:"M82 184 A78 78 0 0 1 238 184"}],["arc3","path",{d:"M110 184 A50 50 0 0 1 210 184"}],["cloud1","circle",{cx:63,cy:187,r:18}],["cloud2","circle",{cx:89,cy:184,r:24}],["cloud3","circle",{cx:113,cy:190,r:17}],["cloud4","circle",{cx:222,cy:187,r:18}],["cloud5","circle",{cx:248,cy:184,r:24}],["cloud6","circle",{cx:272,cy:190,r:17}]]},
+  {id:"castle",name:"Dream Castle",tags:["castle","princess","queen","king","fairy","dream","house"],regions:[["base","rect",{x:93,y:118,width:134,height:88,rx:8}],["tower1","rect",{x:61,y:98,width:48,height:108,rx:7}],["tower2","rect",{x:211,y:98,width:48,height:108,rx:7}],["roof1","path",{d:"M54 98 L85 50 L116 98 Z"}],["roof2","path",{d:"M204 98 L235 50 L266 98 Z"}],["roof3","path",{d:"M112 118 L160 64 L208 118 Z"}],["door","path",{d:"M142 206 L142 170 Q160 146 178 170 L178 206 Z"}],["window1","circle",{cx:85,cy:128,r:10}],["window2","circle",{cx:235,cy:128,r:10}],["window3","circle",{cx:160,cy:134,r:11}]]},
+  {id:"rocket",name:"Space Rocket",tags:["space","rocket","planet","moon","star","galaxy"],regions:[["body","path",{d:"M160 38 C205 82 198 150 160 194 C122 150 115 82 160 38 Z"}],["window","circle",{cx:160,cy:99,r:20}],["fin1","path",{d:"M130 153 L91 202 L145 184 Z"}],["fin2","path",{d:"M190 153 L229 202 L175 184 Z"}],["flame","path",{d:"M145 194 C150 224 170 224 175 194 C168 206 152 206 145 194 Z"}],["star1","path",{d:"M66 62 L73 76 L89 78 L77 88 L80 104 L66 96 L52 104 L55 88 L43 78 L59 76 Z"}],["star2","path",{d:"M245 54 L250 65 L262 66 L253 74 L255 86 L245 80 L235 86 L237 74 L228 66 L240 65 Z"}]]},
+  {id:"fish",name:"Ocean Fish",tags:["fish","ocean","sea","water","beach"],regions:[["body","ellipse",{cx:154,cy:128,rx:72,ry:43}],["tail","path",{d:"M222 128 L274 89 L270 128 L274 167 Z"}],["fin","path",{d:"M150 128 L120 178 L177 149 Z"}],["eye","circle",{cx:113,cy:116,r:8}],["bubble1","circle",{cx:70,cy:68,r:10}],["bubble2","circle",{cx:52,cy:102,r:7}],["bubble3","circle",{cx:251,cy:64,r:13}]]},
+  {id:"cupcake",name:"Sweet Cupcake",tags:["cake","cupcake","sweet","birthday","food"],regions:[["wrapper","path",{d:"M96 128 L224 128 L205 214 L115 214 Z"}],["top1","circle",{cx:122,cy:121,r:31}],["top2","circle",{cx:160,cy:101,r:38}],["top3","circle",{cx:198,cy:121,r:31}],["cherry","circle",{cx:160,cy:50,r:13}],["stripe1","path",{d:"M126 143 L136 204"}],["stripe2","path",{d:"M160 138 L160 208"}],["stripe3","path",{d:"M194 143 L184 204"}]]},
+  {id:"heart",name:"Love Heart",tags:["heart","love","mom","family","valentine"],regions:[["heart","path",{d:"M160 212 C73 156 53 82 103 60 C132 47 153 66 160 84 C167 66 188 47 217 60 C267 82 247 156 160 212 Z"}],["spark1","path",{d:"M66 76 L72 90 L87 96 L72 102 L66 116 L60 102 L45 96 L60 90 Z"}],["spark2","path",{d:"M252 118 L257 129 L269 134 L257 139 L252 150 L247 139 L235 134 L247 129 Z"}]]},
+  {id:"house",name:"Cozy House",tags:["house","home","family","room"],regions:[["home","rect",{x:89,y:112,width:142,height:96,rx:7}],["roof","path",{d:"M72 116 L160 48 L248 116 Z"}],["door","rect",{x:143,y:158,width:34,height:50,rx:7}],["window1","rect",{x:105,y:134,width:28,height:25,rx:5}],["window2","rect",{x:187,y:134,width:28,height:25,rx:5}],["sun","circle",{cx:260,cy:54,r:20}]]},
+];
+
+function pickDrawingIdeas(theme){
+  const q=theme.trim().toLowerCase();
+  const matches=DRAWING_TEMPLATES.filter(t=>t.tags.some(tag=>q&&q.includes(tag)||q&&tag.includes(q)));
+  const base=matches.length?matches:DRAWING_TEMPLATES;
+  const start=(q||"art").split("").reduce((sum,ch)=>sum+ch.charCodeAt(0),0)%base.length;
+  const ideas=[];
+  for(let i=0;ideas.length<3&&i<base.length+3;i++){const item=base[(start+i)%base.length];if(!ideas.some(x=>x.id===item.id))ideas.push(item)}
+  return ideas.length===3?ideas:DRAWING_TEMPLATES.slice(0,3);
+}
+
+function DrawingGame({onBack}){
+  const svgRef=useRef(null);
+  const [mode,setMode]=useState("free");
+  const [theme,setTheme]=useState("");
+  const [ideas,setIdeas]=useState([]);
+  const [template,setTemplate]=useState(null);
+  const [tool,setTool]=useState("draw");
+  const [color,setColor]=useState("#3B82F6");
+  const [brush,setBrush]=useState(7);
+  const [strokes,setStrokes]=useState([]);
+  const [currentStroke,setCurrentStroke]=useState([]);
+  const [drawing,setDrawing]=useState(false);
+  const [fills,setFills]=useState({});
+  const pathFromPoints=points=>points.length<2?"":points.reduce((d,p,i)=>d+(i?` L ${p.x} ${p.y}`:`M ${p.x} ${p.y}`),"");
+  const resetArt=()=>{setStrokes([]);setCurrentStroke([]);setFills({});setDrawing(false)};
+  const chooseMode=next=>{setMode(next);setTool(next==="free"?"draw":"trace");setTemplate(null);setIdeas([]);resetArt()};
+  const pointFromEvent=e=>{const r=svgRef.current?.getBoundingClientRect();if(!r)return{x:0,y:0};return{x:((e.clientX-r.left)/r.width)*320,y:((e.clientY-r.top)/r.height)*240}};
+  const startDraw=e=>{if(tool==="color")return;e.preventDefault();e.currentTarget.setPointerCapture?.(e.pointerId);setDrawing(true);setCurrentStroke([pointFromEvent(e)])};
+  const moveDraw=e=>{if(!drawing||tool==="color")return;e.preventDefault();setCurrentStroke(p=>[...p,pointFromEvent(e)])};
+  const finishDraw=e=>{if(!drawing)return;e.preventDefault();setDrawing(false);if(currentStroke.length>1)setStrokes(p=>[...p,{points:currentStroke,color,size:brush}]);setCurrentStroke([])};
+  const makeIdeas=()=>{setIdeas(pickDrawingIdeas(theme||"rainbow"));setTemplate(null);resetArt();setTool("trace")};
+  const selectTemplate=item=>{setTemplate(item);resetArt();setTool("trace")};
+  const colorRegion=id=>{if(tool==="color")setFills(p=>({...p,[id]:color}))};
+  const renderShape=([id,type,props],preview=false)=>{
+    const common={key:id,stroke:"#374151",strokeWidth:preview?4:3,strokeLinecap:"round",strokeLinejoin:"round",fill:fills[id]||"#FFFFFF",vectorEffect:"non-scaling-stroke",onClick:()=>colorRegion(id),style:{cursor:tool==="color"&&!preview?"pointer":"default"}};
+    if(type==="path")return <path {...common} {...props} fill={props.d?.includes("A")&&!props.d?.includes("Z")?"none":common.fill}/>;
+    if(type==="ellipse")return <ellipse {...common} {...props}/>;
+    if(type==="circle")return <circle {...common} {...props}/>;
+    return <rect {...common} {...props}/>;
+  };
+  return <div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+      <button onClick={onBack} style={S.backBtn}>Back</button>
+      <span style={{fontFamily:"'Fredoka',sans-serif",fontSize:13,fontWeight:700,color:"#EC4899"}}>Drawing Studio</span>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:10}}>
+      {[{k:"free",l:"Free Draw",c:"#3B82F6"},{k:"theme",l:"Themed Drawing",c:"#EC4899"}].map(m=><button key={m.k} onClick={()=>chooseMode(m.k)} style={{padding:"10px",borderRadius:12,border:"none",fontFamily:"'Fredoka',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer",background:mode===m.k?`linear-gradient(135deg,${m.c},${m.c}CC)`:"#FFF",color:mode===m.k?"#FFF":m.c,boxShadow:"0 1px 4px rgba(0,0,0,.04)"}}>{m.l}</button>)}
+    </div>
+    {mode==="theme"&&<div style={{padding:10,background:"#FFF",borderRadius:12,marginBottom:10}}>
+      <div style={{display:"flex",gap:6}}>
+        <input value={theme} onChange={e=>setTheme(e.target.value.slice(0,40))} placeholder="Type a theme..." style={{flex:1,padding:"9px 11px",borderRadius:10,border:"2px solid #FBCFE8",fontFamily:"'Nunito',sans-serif",fontSize:13,outline:"none"}}/>
+        <button onClick={makeIdeas} style={{...BS,background:"linear-gradient(135deg,#F472B6,#EC4899)",color:"#FFF",fontSize:12}}>Make</button>
+      </div>
+      {ideas.length>0&&!template&&<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6,marginTop:8}}>
+        {ideas.map(item=><button key={item.id} onClick={()=>selectTemplate(item)} style={{padding:8,borderRadius:10,border:"2px solid #FCE7F3",background:"#FFF7FB",cursor:"pointer"}}>
+          <svg viewBox="0 0 320 240" style={{width:"100%",height:58,display:"block"}}>{item.regions.map(r=>renderShape(r,true))}</svg>
+          <div style={{fontFamily:"'Fredoka',sans-serif",fontSize:10,fontWeight:700,color:"#9D174D",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.name}</div>
+        </button>)}
+      </div>}
+    </div>}
+    <div style={{display:"flex",gap:5,overflowX:"auto",marginBottom:8,paddingBottom:2}}>
+      {DRAWING_COLORS.map(c=><button key={c} onClick={()=>setColor(c)} style={{width:30,height:30,borderRadius:8,border:color===c?"3px solid #111827":"2px solid #E5E7EB",background:c,cursor:"pointer",flex:"0 0 auto",boxShadow:c==="#FFFFFF"?"inset 0 0 0 1px #D1D5DB":"none"}} aria-label={`Color ${c}`}/>)}
+    </div>
+    <div style={{display:"flex",gap:6,marginBottom:8}}>
+      {[4,7,11].map(s=><button key={s} onClick={()=>setBrush(s)} style={{flex:1,padding:"7px 0",borderRadius:9,border:"none",background:brush===s?"#DBEAFE":"#FFF",color:brush===s?"#1D4ED8":"#6B7280",fontFamily:"'Fredoka',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>{s===4?"Thin":s===7?"Paint":"Bold"}</button>)}
+      {mode==="theme"&&template&&<button onClick={()=>setTool(tool==="color"?"trace":"color")} style={{flex:1,padding:"7px 0",borderRadius:9,border:"none",background:tool==="color"?"#FCE7F3":"#EDE9FE",color:tool==="color"?"#BE185D":"#6D28D9",fontFamily:"'Fredoka',sans-serif",fontSize:11,fontWeight:700,cursor:"pointer"}}>{tool==="color"?"Color":"Trace"}</button>}
+    </div>
+    <div style={{position:"relative",background:"#FFFDF7",border:"3px solid #FDE68A",borderRadius:16,overflow:"hidden",touchAction:"none",boxShadow:"0 4px 12px rgba(251,191,36,.15)"}}>
+      <svg ref={svgRef} viewBox="0 0 320 240" onPointerDown={startDraw} onPointerMove={moveDraw} onPointerUp={finishDraw} onPointerCancel={finishDraw} style={{width:"100%",height:300,display:"block",cursor:tool==="color"?"pointer":"crosshair",background:"linear-gradient(180deg,#FFFBEB,#FFF7ED)"}}>
+        <defs><pattern id="drawing-grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#FDE68A" strokeWidth=".5" opacity=".55"/></pattern></defs>
+        <rect width="320" height="240" fill="url(#drawing-grid)"/>
+        {template&&<g opacity={tool==="trace" ? .35 : 1}>{template.regions.map(r=>renderShape(r))}</g>}
+        {strokes.map((s,i)=><path key={i} d={pathFromPoints(s.points)} fill="none" stroke={s.color} strokeWidth={s.size} strokeLinecap="round" strokeLinejoin="round"/>)}
+        {currentStroke.length>1&&<path d={pathFromPoints(currentStroke)} fill="none" stroke={color} strokeWidth={brush} strokeLinecap="round" strokeLinejoin="round"/>}
+      </svg>
+      {mode==="theme"&&!template&&<div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none"}}>
+        <div style={{fontFamily:"'Fredoka',sans-serif",fontSize:14,fontWeight:700,color:"#BE185D",background:"rgba(255,255,255,.82)",padding:"8px 12px",borderRadius:10}}>Type a theme and pick an outline</div>
+      </div>}
+    </div>
+    <div style={{display:"flex",gap:6,marginTop:8}}>
+      <button onClick={()=>setStrokes(p=>p.slice(0,-1))} style={{...BS,flex:1,background:"#F3F4F6",color:"#4B5563"}}>Undo</button>
+      <button onClick={resetArt} style={{...BS,flex:1,background:"#FEF2F2",color:"#DC2626"}}>Clear</button>
+      {mode==="theme"&&template&&<button onClick={()=>{setTemplate(null);resetArt();}} style={{...BS,flex:1,background:"#FCE7F3",color:"#BE185D"}}>Ideas</button>}
+    </div>
+  </div>;
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // MINI GAMES
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1503,8 +1602,10 @@ export default function AvasWorld() {
     if (activeGame === "riddle") return <RiddleGame onBack={() => setActiveGame(null)} onScore={handleRiddleScore} />;
     if (activeGame === "tongue") return <TongueTwisterGame onBack={() => setActiveGame(null)} />;
     if (activeGame === "joke") return <JokeGame onBack={() => setActiveGame(null)} />;
+    if (activeGame === "drawing") return <DrawingGame onBack={() => setActiveGame(null)} />;
     return <div><div style={S.sectionHeader}><span>🎮 Games & Fun</span><span style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 13, color: "#FBBF24" }}>⭐{totalStars}</span></div>
       <div style={{ marginBottom: 10 }}><div style={{ display: "flex", gap: 5, overflowX: "auto" }}>{GAME_THEMES.map((theme, i) => { const isU = theme.unlocked || unlockedItems[`theme-${i}`]; const isSel = selectedGameTheme === theme.name; return <div key={i} onClick={() => { if (isU) setSelectedGameTheme(theme.name); else if (theme.cost) unlockItem("theme", i, theme.cost); }} style={{ minWidth: 80, padding: "6px 8px", borderRadius: 10, cursor: "pointer", background: isSel ? `linear-gradient(135deg,${theme.colors[0]},${theme.colors[1]})` : isU ? "#FFF" : "#F3F4F6", border: isSel ? `2px solid ${theme.colors[1]}` : "2px solid #E5E7EB", opacity: isU ? 1 : .6 }}><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 10, fontWeight: 600, color: isSel ? "#FFF" : "#1F2937", whiteSpace: "nowrap" }}>{theme.name}</div>{!isU && <div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 8, color: "#9CA3AF" }}>🔒{theme.cost}⭐</div>}</div>; })}</div></div>
+      <div onClick={() => setActiveGame("drawing")} style={{ padding: 12, marginBottom: 6, borderRadius: 12, cursor: "pointer", background: "#EC489910", border: "2px solid #EC489920" }}><div style={{ display: "flex", alignItems: "center", gap: 9 }}><div style={{ width: 40, height: 40, borderRadius: 10, background: "#EC489918", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🎨</div><div style={{ flex: 1 }}><div style={{ fontFamily: "'Fredoka',sans-serif", fontWeight: 700, fontSize: 13, color: "#1F2937" }}>Drawing Studio</div><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 10, color: "#6B7280" }}>Free draw or trace a theme</div></div><div style={{ fontSize: 13, color: "#EC4899" }}>▶</div></div></div>
       {[{ name: "Memory Match", icon: "🦋", desc: selectedGameTheme, color: "#4ECDC4", type: "memory" }, { name: "Riddles", icon: "🧩", desc: "Brain teasers! +3⭐ each", color: "#FBBF24", type: "riddle" }, { name: "Tongue Twisters", icon: "👅", desc: "Can you say it 3x fast?", color: "#A78BFA", type: "tongue" }, { name: "Jokes", icon: "😂", desc: "Knock knock! Who's there?", color: "#60A5FA", type: "joke" }].map((g, i) => <div key={i} onClick={() => setActiveGame(g.type)} style={{ padding: 12, marginBottom: 6, borderRadius: 12, cursor: "pointer", background: `${g.color}10`, border: `2px solid ${g.color}20` }}><div style={{ display: "flex", alignItems: "center", gap: 9 }}><div style={{ width: 40, height: 40, borderRadius: 10, background: `${g.color}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>{g.icon}</div><div style={{ flex: 1 }}><div style={{ fontFamily: "'Fredoka',sans-serif", fontWeight: 700, fontSize: 13, color: "#1F2937" }}>{g.name}</div><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 10, color: "#6B7280" }}>{g.desc}</div></div><div style={{ fontSize: 13, color: g.color }}>▶</div></div></div>)}
     </div>;
   };
