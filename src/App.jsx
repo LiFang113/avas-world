@@ -46,8 +46,8 @@ if (typeof window !== "undefined" && !storageApi) {
   };
 }
 
-const TABS = ["🏠","🏆","📚","📓","💬","📰","🀄","🎮","📦"];
-const TAB_LABELS = ["Home","Reward","Study","Diary","Chat","News","中文","Games","More"];
+const TABS = ["🏠","📚","🎵","💬","🏆","📦"];
+const TAB_LABELS = ["Home","Study","Music","Chat","Reward","More"];
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const SHORT_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -1137,8 +1137,8 @@ export default function AvasWorld() {
   const [newRewardStars, setNewRewardStars] = useState("");
   const [newRewardEmoji, setNewRewardEmoji] = useState("🎁");
   const [showAddReward, setShowAddReward] = useState(false);
-  const [showGameRewards, setShowGameRewards] = useState(false);
-  const [othersSubTab, setOthersSubTab] = useState("love");
+  const [studySubTab, setStudySubTab] = useState("schedule");
+  const [moreSubTab, setMoreSubTab] = useState("games");
   const addStars = useCallback(n => { setTotalStars(s => s + n); setShowStarAnim(n); }, []);
   const handleMemoryWin = useCallback(() => addStars(15), [addStars]);
   const handleMathScore = useCallback(n => addStars(n), [addStars]);
@@ -1265,7 +1265,7 @@ export default function AvasWorld() {
     try { const res = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, tools: [{ type: "web_search_20250305", name: "web_search" }], messages: [{ role: "user", content: `News reporter for 8-year-old Ava. Search today's news, create 4 kid stories. ONLY JSON: [{"title":"...","emoji":"🐸","summary":"...","category":"Science"}]` }] }) }); const data = await res.json(); const text = data.content?.filter(b => b.type === "text").map(b => b.text).join("") || ""; const parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); const colors = ["#34D399", "#60A5FA", "#F472B6", "#FBBF24"]; setNewsStories(parsed.map((s, i) => ({ ...s, color: colors[i % 4] }))); } catch { setNewsError("Fun facts instead!"); setNewsStories([{ title: "Honey Never Spoils!", emoji: "🍯", summary: "3,000-year-old honey was still edible!", category: "Fun Facts", color: "#FBBF24" }, { title: "Octopuses Have Blue Blood", emoji: "🐙", summary: "Copper in their blood makes it blue!", category: "Animals", color: "#60A5FA" }, { title: "Venus Days > Years", emoji: "🪐", summary: "One Venus day = 243 Earth days!", category: "Space", color: "#F472B6" }, { title: "Bananas Are Berries!", emoji: "🍌", summary: "Botanically berries, strawberries aren't!", category: "Science", color: "#34D399" }]); }
     setNewsLoading(false);
   };
-  useEffect(() => { if (activeTab === 5 && newsStories.length === 0 && !newsLoading) fetchNews(); }, [activeTab]);
+  useEffect(() => { if (activeTab === 5 && moreSubTab === "news" && newsStories.length === 0 && !newsLoading) fetchNews(); }, [activeTab, moreSubTab]);
 
   // ─── HOME ─────────────────────────────────────────────────────────────
   const HomeTab = () => {
@@ -1277,10 +1277,10 @@ export default function AvasWorld() {
       {todayCompleted < todayTasks.length ? <div style={{ padding: 10, background: "linear-gradient(135deg,#EDE9FE,#DDD6FE)", borderRadius: 12, marginBottom: 10 }}><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 12, fontWeight: 600, color: "#5B21B6", marginBottom: 5 }}>{todayCompleted === 0 ? "💪 Let's earn stars!" : `🎯 ${todayTasks.length - todayCompleted} to go!`}</div>{todayTasks.map((task, i) => { const done = completedTasks[`${todayKey}-${i}`]; return <div key={i} onClick={() => toggleTask(todayKey, i)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 8px", background: done ? "rgba(255,255,255,.6)" : "rgba(255,255,255,.3)", borderRadius: 8, marginBottom: 3, cursor: "pointer" }}><div style={{ width: 18, height: 18, borderRadius: 5, border: `2px solid ${done ? "#34D399" : "#A78BFA"}`, background: done ? "#34D399" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFF", fontSize: 9 }}>{done ? "✓" : ""}</div><span style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 11, color: done ? "#6B7280" : "#1F2937", textDecoration: done ? "line-through" : "none", flex: 1 }}>{task.icon} {task.subject}</span><span style={{ fontFamily: "'Nunito',sans-serif", fontSize: 10, color: "#FBBF24" }}>+{task.stars}⭐</span></div>; })}</div> : <div style={{ padding: 12, background: "linear-gradient(135deg,#D1FAE5,#A7F3D0)", borderRadius: 12, marginBottom: 10, textAlign: "center" }}><div style={{ fontSize: 28 }}>🎉</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 14, color: "#065F46", fontWeight: 600 }}>All done!</div></div>}
       {/* Quick links row */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6, marginBottom: 10 }}>
-        <div onClick={() => { setActiveTab(8); setOthersSubTab("love"); }} style={{ cursor: "pointer", padding: 10, background: "linear-gradient(135deg,#FDF2F8,#FCE7F3)", borderRadius: 11, textAlign: "center" }}><div style={{ fontSize: 20 }}>💕</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 9, color: "#9D174D", fontWeight: 600 }}>💋{todayLove.kisses} ❤️{todayLove.loveyous}</div></div>
-        <div onClick={() => { setActiveTab(8); setOthersSubTab("craft"); }} style={{ cursor: "pointer", padding: 10, background: "linear-gradient(135deg,#EDE9FE,#DDD6FE)", borderRadius: 11, textAlign: "center" }}><div style={{ fontSize: 20 }}>🔬</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 9, color: "#5B21B6", fontWeight: 600 }}>STEM Lab</div></div>
-        <div onClick={() => setActiveTab(3)} style={{ cursor: "pointer", padding: 10, background: "linear-gradient(135deg,#FCE7F3,#FBCFE8)", borderRadius: 11, textAlign: "center" }}><div style={{ fontSize: 20 }}>📓</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 9, color: "#9D174D", fontWeight: 600 }}>Diary +3⭐</div></div>
-        <div onClick={() => setActiveTab(4)} style={{ cursor: "pointer", padding: 10, background: "linear-gradient(135deg,#DBEAFE,#BFDBFE)", borderRadius: 11, textAlign: "center" }}><div style={{ fontSize: 20 }}>💬</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 9, color: "#1D4ED8", fontWeight: 600 }}>Chat Room</div></div>
+        <div onClick={() => { setActiveTab(5); setMoreSubTab("love"); }} style={{ cursor: "pointer", padding: 10, background: "linear-gradient(135deg,#FDF2F8,#FCE7F3)", borderRadius: 11, textAlign: "center" }}><div style={{ fontSize: 20 }}>💕</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 9, color: "#9D174D", fontWeight: 600 }}>💋{todayLove.kisses} ❤️{todayLove.loveyous}</div></div>
+        <div onClick={() => { setActiveTab(1); setStudySubTab("stem"); }} style={{ cursor: "pointer", padding: 10, background: "linear-gradient(135deg,#EDE9FE,#DDD6FE)", borderRadius: 11, textAlign: "center" }}><div style={{ fontSize: 20 }}>🔬</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 9, color: "#5B21B6", fontWeight: 600 }}>STEM Lab</div></div>
+        <div onClick={() => { setActiveTab(5); setMoreSubTab("diary"); }} style={{ cursor: "pointer", padding: 10, background: "linear-gradient(135deg,#FCE7F3,#FBCFE8)", borderRadius: 11, textAlign: "center" }}><div style={{ fontSize: 20 }}>📓</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 9, color: "#9D174D", fontWeight: 600 }}>Diary +3⭐</div></div>
+        <div onClick={() => setActiveTab(3)} style={{ cursor: "pointer", padding: 10, background: "linear-gradient(135deg,#DBEAFE,#BFDBFE)", borderRadius: 11, textAlign: "center" }}><div style={{ fontSize: 20 }}>💬</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 9, color: "#1D4ED8", fontWeight: 600 }}>Chat Room</div></div>
       </div>
       {starsNeeded && <div style={{ padding: 10, background: "linear-gradient(135deg,#FFF7ED,#FFEDD5)", borderRadius: 11, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ fontSize: 22 }}>{starsNeeded.emoji}</div><div style={{ flex: 1 }}><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 11, fontWeight: 600, color: "#92400E" }}>Next: {starsNeeded.name}</div><div style={{ height: 5, borderRadius: 3, background: "#FDE68A", marginTop: 3, overflow: "hidden" }}><div style={{ height: "100%", borderRadius: 3, background: "linear-gradient(90deg,#FBBF24,#F59E0B)", width: `${Math.min(100, (totalStars / starsNeeded.stars) * 100)}%` }} /></div></div></div>}
     </div>);
@@ -1464,30 +1464,70 @@ export default function AvasWorld() {
     </div>;
   };
 
-  // ─── OTHERS TAB (Love, Craft, Music) ──────────────────────────────
-  const OthersTab = () => {
-    const subTabs = [{ key: "love", icon: "💕", label: "Love" }, { key: "craft", icon: "🔬", label: "STEM" }, { key: "music", icon: "🎵", label: "Music" }];
-    return <div>
-      <div style={{ display: "flex", gap: 3, marginBottom: 12, background: "#F3F4F6", borderRadius: 9, padding: 2 }}>
-        {subTabs.map(t => <button key={t.key} onClick={() => setOthersSubTab(t.key)} style={{ flex: 1, padding: "7px 0", borderRadius: 7, border: "none", fontFamily: "'Fredoka',sans-serif", fontSize: 11, fontWeight: 600, cursor: "pointer", background: othersSubTab === t.key ? "#FFF" : "transparent", color: othersSubTab === t.key ? "#1F2937" : "#9CA3AF", boxShadow: othersSubTab === t.key ? "0 1px 3px rgba(0,0,0,.06)" : "none" }}>{t.icon} {t.label}</button>)}
+  const SubTabBar = ({ tabs, value, onChange }) => (
+    <div style={{ display: "flex", gap: 3, marginBottom: 12, background: "#F3F4F6", borderRadius: 9, padding: 2, overflowX: "auto" }}>
+      {tabs.map(t => <button key={t.key} onClick={() => { setActiveGame(null); onChange(t.key); }} style={{ flex: 1, minWidth: 66, padding: "7px 0", borderRadius: 7, border: "none", fontFamily: "'Fredoka',sans-serif", fontSize: 10, fontWeight: 600, cursor: "pointer", background: value === t.key ? "#FFF" : "transparent", color: value === t.key ? "#1F2937" : "#9CA3AF", boxShadow: value === t.key ? "0 1px 3px rgba(0,0,0,.06)" : "none", whiteSpace: "nowrap" }}>{t.icon} {t.label}</button>)}
+    </div>
+  );
+
+  const MathQuestCard = () => (
+    <div>
+      <div style={S.sectionHeader}><span>🏰 Math Quest</span><span style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 13, color: "#FBBF24" }}>⭐{totalStars}</span></div>
+      <div onClick={() => setActiveGame("math")} style={{ padding: 14, borderRadius: 14, cursor: "pointer", background: "#FFF1F2", border: "2px solid #FFE4E6" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 11, background: "#FF6B6B18", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🏰</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: "'Fredoka',sans-serif", fontWeight: 700, fontSize: 14, color: "#1F2937" }}>Math Quest</div>
+            <div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 11, color: "#6B7280" }}>Solve puzzles and earn +2⭐ each</div>
+          </div>
+          <div style={{ fontSize: 13, color: "#FF6B6B" }}>▶</div>
+        </div>
       </div>
-      {othersSubTab === "love" && <LoveTab loveLog={loveLog} onKiss={handleKiss} onLoveYou={handleLoveYou} />}
-      {othersSubTab === "craft" && <CraftTab onEarnStars={addStars} />}
-      {othersSubTab === "music" && MusicTab()}
+    </div>
+  );
+
+  const StudyPanel = () => {
+    if (activeGame === "math") return <MathGame onBack={() => setActiveGame(null)} onScore={handleMathScore} />;
+    const tabs = [{ key: "schedule", icon: "📚", label: "Plan" }, { key: "chinese", icon: "🀄", label: "Chinese" }, { key: "stem", icon: "🔬", label: "STEM" }, { key: "math", icon: "🏰", label: "Math" }];
+    return <div>
+      <SubTabBar tabs={tabs} value={studySubTab} onChange={setStudySubTab} />
+      {studySubTab === "schedule" && StudyTab()}
+      {studySubTab === "chinese" && ChineseTab()}
+      {studySubTab === "stem" && <CraftTab onEarnStars={addStars} />}
+      {studySubTab === "math" && <MathQuestCard />}
+    </div>;
+  };
+
+  const MoreGamesTab = () => {
+    if (activeGame === "memory") return <MemoryGame onBack={() => setActiveGame(null)} theme={selectedGameTheme} onWin={handleMemoryWin} />;
+    if (activeGame === "riddle") return <RiddleGame onBack={() => setActiveGame(null)} onScore={handleRiddleScore} />;
+    if (activeGame === "tongue") return <TongueTwisterGame onBack={() => setActiveGame(null)} />;
+    if (activeGame === "joke") return <JokeGame onBack={() => setActiveGame(null)} />;
+    return <div><div style={S.sectionHeader}><span>🎮 Games & Fun</span><span style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 13, color: "#FBBF24" }}>⭐{totalStars}</span></div>
+      <div style={{ marginBottom: 10 }}><div style={{ display: "flex", gap: 5, overflowX: "auto" }}>{GAME_THEMES.map((theme, i) => { const isU = theme.unlocked || unlockedItems[`theme-${i}`]; const isSel = selectedGameTheme === theme.name; return <div key={i} onClick={() => { if (isU) setSelectedGameTheme(theme.name); else if (theme.cost) unlockItem("theme", i, theme.cost); }} style={{ minWidth: 80, padding: "6px 8px", borderRadius: 10, cursor: "pointer", background: isSel ? `linear-gradient(135deg,${theme.colors[0]},${theme.colors[1]})` : isU ? "#FFF" : "#F3F4F6", border: isSel ? `2px solid ${theme.colors[1]}` : "2px solid #E5E7EB", opacity: isU ? 1 : .6 }}><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 10, fontWeight: 600, color: isSel ? "#FFF" : "#1F2937", whiteSpace: "nowrap" }}>{theme.name}</div>{!isU && <div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 8, color: "#9CA3AF" }}>🔒{theme.cost}⭐</div>}</div>; })}</div></div>
+      {[{ name: "Memory Match", icon: "🦋", desc: selectedGameTheme, color: "#4ECDC4", type: "memory" }, { name: "Riddles", icon: "🧩", desc: "Brain teasers! +3⭐ each", color: "#FBBF24", type: "riddle" }, { name: "Tongue Twisters", icon: "👅", desc: "Can you say it 3x fast?", color: "#A78BFA", type: "tongue" }, { name: "Jokes", icon: "😂", desc: "Knock knock! Who's there?", color: "#60A5FA", type: "joke" }].map((g, i) => <div key={i} onClick={() => setActiveGame(g.type)} style={{ padding: 12, marginBottom: 6, borderRadius: 12, cursor: "pointer", background: `${g.color}10`, border: `2px solid ${g.color}20` }}><div style={{ display: "flex", alignItems: "center", gap: 9 }}><div style={{ width: 40, height: 40, borderRadius: 10, background: `${g.color}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>{g.icon}</div><div style={{ flex: 1 }}><div style={{ fontFamily: "'Fredoka',sans-serif", fontWeight: 700, fontSize: 13, color: "#1F2937" }}>{g.name}</div><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 10, color: "#6B7280" }}>{g.desc}</div></div><div style={{ fontSize: 13, color: g.color }}>▶</div></div></div>)}
+    </div>;
+  };
+
+  const MorePanel = () => {
+    const tabs = [{ key: "games", icon: "🎮", label: "Game" }, { key: "diary", icon: "📓", label: "Diary" }, { key: "news", icon: "📰", label: "News" }, { key: "love", icon: "💕", label: "Love" }];
+    return <div>
+      <SubTabBar tabs={tabs} value={moreSubTab} onChange={setMoreSubTab} />
+      {moreSubTab === "games" && <MoreGamesTab />}
+      {moreSubTab === "diary" && DiaryTab()}
+      {moreSubTab === "news" && NewsTab()}
+      {moreSubTab === "love" && <LoveTab loveLog={loveLog} onKiss={handleKiss} onLoveYou={handleLoveYou} />}
     </div>;
   };
 
   const renderTab = () => {
     switch(activeTab) {
       case 0: return HomeTab();
-      case 1: return RewardTab();
-      case 2: return StudyTab();
-      case 3: return DiaryTab();
-      case 4: return <ChatRoom account={account} />;
-      case 5: return NewsTab();
-      case 6: return ChineseTab();
-      case 7: return GamesTab();
-      case 8: return OthersTab();
+      case 1: return <StudyPanel />;
+      case 2: return MusicTab();
+      case 3: return <ChatRoom account={account} />;
+      case 4: return RewardTab();
+      case 5: return <MorePanel />;
       default: return HomeTab();
     }
   };
