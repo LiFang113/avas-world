@@ -415,6 +415,9 @@ const DRAWING_TEMPLATES = [
   {id:"unicorn-face",name:"Unicorn Face",tags:["unicorn","pony","horse","magic","fairy"],regions:[["face","path",{d:"M100 142 C100 84 220 84 220 142 C220 203 100 203 100 142 Z"}],["horn","path",{d:"M145 89 L160 35 L175 89 Z"}],["mane1","path",{d:"M116 104 C82 123 76 164 111 188 C100 160 104 130 116 104 Z"}],["ear1","path",{d:"M111 106 L82 62 L128 88 Z"}],["ear2","path",{d:"M209 106 L238 62 L192 88 Z"}],["eye1","circle",{cx:135,cy:139,r:8}],["eye2","circle",{cx:185,cy:139,r:8}],["nose1","circle",{cx:145,cy:177,r:5}],["nose2","circle",{cx:175,cy:177,r:5}]]},
   {id:"unicorn-side",name:"Magic Unicorn",tags:["unicorn","pony","horse","magic","rainbow"],regions:[["body","ellipse",{cx:164,cy:151,rx:70,ry:37}],["neck","path",{d:"M105 138 C93 95 122 73 153 95 C133 107 122 126 119 150 Z"}],["head","ellipse",{cx:90,cy:86,rx:38,ry:26,transform:"rotate(-14 90 86)"}],["horn","path",{d:"M70 62 L84 18 L94 68 Z"}],["ear","path",{d:"M111 65 L128 32 L132 73 Z"}],["tail","path",{d:"M229 139 C274 113 283 172 235 179"}],["leg1","rect",{x:123,y:178,width:14,height:44,rx:5}],["leg2","rect",{x:184,y:178,width:14,height:44,rx:5}],["eye","circle",{cx:78,cy:83,r:5}]]},
   {id:"unicorn-star",name:"Star Unicorn",tags:["unicorn","star","magic","sparkle","fairy"],regions:[["head","path",{d:"M100 168 C86 118 108 72 158 75 C209 78 236 123 214 169 C185 151 131 151 100 168 Z"}],["horn","path",{d:"M145 77 L166 22 L181 84 Z"}],["mane","path",{d:"M205 91 C246 111 242 164 211 188 C218 153 217 119 205 91 Z"}],["ear1","path",{d:"M111 91 L83 51 L129 75 Z"}],["ear2","path",{d:"M205 94 L235 55 L217 103 Z"}],["eye1","path",{d:"M124 126 Q139 138 154 126"}],["eye2","path",{d:"M172 126 Q187 138 202 126"}],["star1","path",{d:"M67 61 L73 75 L88 80 L74 87 L69 102 L61 88 L46 83 L60 75 Z"}],["star2","path",{d:"M253 55 L258 66 L270 70 L259 77 L255 89 L248 78 L236 74 L247 67 Z"}]]},
+  {id:"unicorn-wing",name:"Winged Unicorn",tags:["unicorn","pegasus","pony","horse","magic","wing","fairy"],regions:[["body","path",{d:"M92 154 C108 103 200 101 226 151 C243 184 205 209 150 201 C104 195 80 180 92 154 Z",fill:"#FDF2F8"}],["head","path",{d:"M73 93 C89 57 137 62 148 96 C157 124 119 144 90 126 C75 117 66 108 73 93 Z",fill:"#FFF7ED"}],["horn","path",{d:"M92 67 L109 19 L120 76 Z",fill:"#FDE68A"}],["wing1","path",{d:"M166 127 C185 72 241 58 276 84 C240 90 224 109 218 135 C202 116 186 116 166 127 Z",fill:"#DBEAFE"}],["wing2","path",{d:"M178 142 C202 113 245 111 271 136 C239 132 220 143 204 166 C196 151 188 145 178 142 Z",fill:"#EDE9FE"}],["mane","path",{d:"M133 82 C165 99 154 141 124 157 C133 132 126 105 133 82 Z",fill:"#FBCFE8"}],["tail","path",{d:"M225 153 C279 127 290 192 233 194 C251 180 252 164 225 153 Z",fill:"#F0ABFC"}],["leg1","path",{d:"M126 194 L117 226 L136 226 L143 198 Z",fill:"#FFF7ED"}],["leg2","path",{d:"M188 197 L198 226 L216 226 L205 194 Z",fill:"#FFF7ED"}],["eye","path",{d:"M91 96 Q101 103 112 95"}]]},
+  {id:"unicorn-rainbow",name:"Rainbow Unicorn",tags:["unicorn","rainbow","pony","horse","magic","color"],regions:[["face","path",{d:"M100 150 C96 96 132 61 178 71 C216 80 238 119 218 163 C195 210 127 205 100 150 Z",fill:"#FFF7ED"}],["horn","path",{d:"M151 73 L168 23 L183 78 Z",fill:"#FDE68A"}],["ear1","path",{d:"M117 86 L91 48 L135 68 Z",fill:"#FCE7F3"}],["ear2","path",{d:"M197 83 L231 52 L213 100 Z",fill:"#FCE7F3"}],["mane1","path",{d:"M205 86 C243 105 252 153 219 192 C225 150 219 114 205 86 Z",fill:"#F9A8D4"}],["mane2","path",{d:"M215 98 C253 128 250 173 220 207 C241 159 229 124 215 98 Z",fill:"#93C5FD"}],["eye1","path",{d:"M129 133 Q143 143 158 132"}],["eye2","path",{d:"M175 130 Q191 141 205 128"}],["snout","path",{d:"M130 168 C145 185 180 187 198 166 C189 195 143 199 130 168 Z",fill:"#FFE4E6"}],["rainbow1","path",{d:"M42 67 C67 36 107 33 132 62"}],["rainbow2","path",{d:"M45 89 C70 58 103 56 126 81"}],["rainbow3","path",{d:"M49 110 C71 84 99 82 120 101"}]]},
+  {id:"unicorn-sleepy",name:"Sleepy Unicorn",tags:["unicorn","sleep","dream","moon","star","magic"],regions:[["body","path",{d:"M77 170 C93 128 163 106 220 128 C256 142 257 186 222 202 C174 224 100 214 77 170 Z",fill:"#EEF2FF"}],["head","path",{d:"M88 126 C82 84 119 55 158 70 C190 82 192 125 161 145 C129 165 94 152 88 126 Z",fill:"#FFF7ED"}],["horn","path",{d:"M125 67 L139 23 L151 75 Z",fill:"#FDE68A"}],["ear","path",{d:"M157 76 L190 44 L176 93 Z",fill:"#FCE7F3"}],["mane","path",{d:"M156 75 C196 94 195 143 160 165 C175 128 170 98 156 75 Z",fill:"#C4B5FD"}],["tail","path",{d:"M223 142 C270 124 281 178 235 190 C251 170 247 153 223 142 Z",fill:"#FBCFE8"}],["eye","path",{d:"M104 113 Q117 124 133 112"}],["leg1","path",{d:"M118 197 Q134 211 154 199"}],["leg2","path",{d:"M181 203 Q200 215 219 199"}],["moon","path",{d:"M251 50 C226 61 226 97 251 108 C219 112 199 88 208 63 C215 43 233 35 251 50 Z",fill:"#FEF3C7"}],["star","path",{d:"M54 59 L61 74 L77 78 L64 88 L66 104 L53 95 L38 103 L43 87 L31 76 L47 74 Z",fill:"#FDE68A"}]]},
   {id:"castle",name:"Dream Castle",tags:["castle","princess","queen","king","fairy","dream","house"],regions:[["base","rect",{x:93,y:118,width:134,height:88,rx:8}],["tower1","rect",{x:61,y:98,width:48,height:108,rx:7}],["tower2","rect",{x:211,y:98,width:48,height:108,rx:7}],["roof1","path",{d:"M54 98 L85 50 L116 98 Z"}],["roof2","path",{d:"M204 98 L235 50 L266 98 Z"}],["roof3","path",{d:"M112 118 L160 64 L208 118 Z"}],["door","path",{d:"M142 206 L142 170 Q160 146 178 170 L178 206 Z"}],["window1","circle",{cx:85,cy:128,r:10}],["window2","circle",{cx:235,cy:128,r:10}],["window3","circle",{cx:160,cy:134,r:11}]]},
   {id:"rocket",name:"Space Rocket",tags:["space","rocket","planet","moon","star","galaxy"],regions:[["body","path",{d:"M160 38 C205 82 198 150 160 194 C122 150 115 82 160 38 Z"}],["window","circle",{cx:160,cy:99,r:20}],["fin1","path",{d:"M130 153 L91 202 L145 184 Z"}],["fin2","path",{d:"M190 153 L229 202 L175 184 Z"}],["flame","path",{d:"M145 194 C150 224 170 224 175 194 C168 206 152 206 145 194 Z"}],["star1","path",{d:"M66 62 L73 76 L89 78 L77 88 L80 104 L66 96 L52 104 L55 88 L43 78 L59 76 Z"}],["star2","path",{d:"M245 54 L250 65 L262 66 L253 74 L255 86 L245 80 L235 86 L237 74 L228 66 L240 65 Z"}]]},
   {id:"fish",name:"Ocean Fish",tags:["fish","ocean","sea","water","beach"],regions:[["body","ellipse",{cx:154,cy:128,rx:72,ry:43}],["tail","path",{d:"M222 128 L274 89 L270 128 L274 167 Z"}],["fin","path",{d:"M150 128 L120 178 L177 149 Z"}],["eye","circle",{cx:113,cy:116,r:8}],["bubble1","circle",{cx:70,cy:68,r:10}],["bubble2","circle",{cx:52,cy:102,r:7}],["bubble3","circle",{cx:251,cy:64,r:13}]]},
@@ -423,12 +426,12 @@ const DRAWING_TEMPLATES = [
   {id:"house",name:"Cozy House",tags:["house","home","family","room"],regions:[["home","rect",{x:89,y:112,width:142,height:96,rx:7}],["roof","path",{d:"M72 116 L160 48 L248 116 Z"}],["door","rect",{x:143,y:158,width:34,height:50,rx:7}],["window1","rect",{x:105,y:134,width:28,height:25,rx:5}],["window2","rect",{x:187,y:134,width:28,height:25,rx:5}],["sun","circle",{cx:260,cy:54,r:20}]]},
 ];
 
-function pickDrawingIdeas(theme){
+function pickDrawingIdeas(theme,offset=0){
   const q=theme.trim().toLowerCase();
   const matches=DRAWING_TEMPLATES.filter(t=>t.tags.some(tag=>q&&q.includes(tag)||q&&tag.includes(q)));
   const pool=[...matches,...DRAWING_TEMPLATES.filter(t=>!matches.some(m=>m.id===t.id))];
-  const start=(q||"art").split("").reduce((sum,ch)=>sum+ch.charCodeAt(0),0)%pool.length;
-  const ideas=matches.slice(0,3);
+  const start=((q||"art").split("").reduce((sum,ch)=>sum+ch.charCodeAt(0),0)+offset*3)%pool.length;
+  const ideas=[];
   for(let i=0;ideas.length<3&&i<pool.length+3;i++){const item=pool[(start+i)%pool.length];if(!ideas.some(x=>x.id===item.id))ideas.push(item)}
   return ideas;
 }
@@ -438,6 +441,7 @@ function DrawingGame({onBack}){
   const [mode,setMode]=useState("free");
   const [theme,setTheme]=useState("");
   const [ideas,setIdeas]=useState([]);
+  const [ideaPage,setIdeaPage]=useState(0);
   const [template,setTemplate]=useState(null);
   const [tool,setTool]=useState("draw");
   const [color,setColor]=useState("#3B82F6");
@@ -453,11 +457,12 @@ function DrawingGame({onBack}){
   const startDraw=e=>{if(tool==="color")return;e.preventDefault();e.currentTarget.setPointerCapture?.(e.pointerId);setDrawing(true);setCurrentStroke([pointFromEvent(e)])};
   const moveDraw=e=>{if(!drawing||tool==="color")return;e.preventDefault();setCurrentStroke(p=>[...p,pointFromEvent(e)])};
   const finishDraw=e=>{if(!drawing)return;e.preventDefault();setDrawing(false);if(currentStroke.length>1)setStrokes(p=>[...p,{points:currentStroke,color,size:brush}]);setCurrentStroke([])};
-  const makeIdeas=()=>{setIdeas(pickDrawingIdeas(theme||"rainbow"));setTemplate(null);resetArt();setTool("trace")};
+  const makeIdeas=()=>{setIdeaPage(0);setIdeas(pickDrawingIdeas(theme||"rainbow",0));setTemplate(null);resetArt();setTool("trace")};
+  const refreshIdeas=()=>{const next=ideaPage+1;setIdeaPage(next);setIdeas(pickDrawingIdeas(theme||"rainbow",next));setTemplate(null);resetArt();setTool("trace")};
   const selectTemplate=item=>{setTemplate(item);resetArt();setTool("trace")};
   const colorRegion=id=>{if(tool==="color")setFills(p=>({...p,[id]:color}))};
   const renderShape=([id,type,props],preview=false)=>{
-    const common={key:id,stroke:"#374151",strokeWidth:preview?4:3,strokeLinecap:"round",strokeLinejoin:"round",fill:fills[id]||"#FFFFFF",vectorEffect:"non-scaling-stroke",onClick:()=>colorRegion(id),style:{cursor:tool==="color"&&!preview?"pointer":"default"}};
+    const common={key:id,stroke:props.stroke||"#374151",strokeWidth:preview?3.5:3,strokeLinecap:"round",strokeLinejoin:"round",fill:fills[id]||props.fill||"#FFFFFF",vectorEffect:"non-scaling-stroke",onClick:()=>colorRegion(id),style:{cursor:tool==="color"&&!preview?"pointer":"default"}};
     if(type==="path")return <path {...common} {...props} fill={props.d?.includes("A")&&!props.d?.includes("Z")?"none":common.fill}/>;
     if(type==="ellipse")return <ellipse {...common} {...props}/>;
     if(type==="circle")return <circle {...common} {...props}/>;
@@ -475,10 +480,11 @@ function DrawingGame({onBack}){
       <div style={{display:"flex",gap:6}}>
         <input value={theme} onChange={e=>setTheme(e.target.value.slice(0,40))} placeholder="Type a theme..." style={{flex:1,padding:"9px 11px",borderRadius:10,border:"2px solid #FBCFE8",fontFamily:"'Nunito',sans-serif",fontSize:13,outline:"none"}}/>
         <button onClick={makeIdeas} style={{...BS,background:"linear-gradient(135deg,#F472B6,#EC4899)",color:"#FFF",fontSize:12}}>Make</button>
+        {ideas.length>0&&!template&&<button onClick={refreshIdeas} style={{...BS,background:"#FCE7F3",color:"#BE185D",fontSize:12,padding:"7px 10px"}}>Refresh</button>}
       </div>
       {ideas.length>0&&!template&&<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6,marginTop:8}}>
-        {ideas.map(item=><button key={item.id} onClick={()=>selectTemplate(item)} style={{padding:8,borderRadius:10,border:"2px solid #FCE7F3",background:"#FFF7FB",cursor:"pointer"}}>
-          <svg viewBox="0 0 320 240" style={{width:"100%",height:58,display:"block"}}>{item.regions.map(r=>renderShape(r,true))}</svg>
+        {ideas.map(item=><button key={item.id} onClick={()=>selectTemplate(item)} style={{padding:8,borderRadius:10,border:"2px solid #FCE7F3",background:"linear-gradient(180deg,#FFF7FB,#FFFFFF)",cursor:"pointer",boxShadow:"0 3px 10px rgba(236,72,153,.08)"}}>
+          <svg viewBox="0 0 320 240" style={{width:"100%",height:78,display:"block"}}>{item.regions.map(r=>renderShape(r,true))}</svg>
           <div style={{fontFamily:"'Fredoka',sans-serif",fontSize:10,fontWeight:700,color:"#9D174D",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{item.name}</div>
         </button>)}
       </div>}
