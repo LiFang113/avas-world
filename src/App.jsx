@@ -46,8 +46,8 @@ if (typeof window !== "undefined" && !storageApi) {
   };
 }
 
-const TABS = ["🏠","📚","🎵","💬","🏆","📦"];
-const TAB_LABELS = ["Home","Study","Music","Chat","Reward","More"];
+const TABS = ["🏠","📚","📓","💬","🎵","🏆","📦"];
+const TAB_LABELS = ["Home","Study","Diary","Chat","Music","Reward","More"];
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const SHORT_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -1265,7 +1265,7 @@ export default function AvasWorld() {
     try { const res = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, tools: [{ type: "web_search_20250305", name: "web_search" }], messages: [{ role: "user", content: `News reporter for 8-year-old Ava. Search today's news, create 4 kid stories. ONLY JSON: [{"title":"...","emoji":"🐸","summary":"...","category":"Science"}]` }] }) }); const data = await res.json(); const text = data.content?.filter(b => b.type === "text").map(b => b.text).join("") || ""; const parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); const colors = ["#34D399", "#60A5FA", "#F472B6", "#FBBF24"]; setNewsStories(parsed.map((s, i) => ({ ...s, color: colors[i % 4] }))); } catch { setNewsError("Fun facts instead!"); setNewsStories([{ title: "Honey Never Spoils!", emoji: "🍯", summary: "3,000-year-old honey was still edible!", category: "Fun Facts", color: "#FBBF24" }, { title: "Octopuses Have Blue Blood", emoji: "🐙", summary: "Copper in their blood makes it blue!", category: "Animals", color: "#60A5FA" }, { title: "Venus Days > Years", emoji: "🪐", summary: "One Venus day = 243 Earth days!", category: "Space", color: "#F472B6" }, { title: "Bananas Are Berries!", emoji: "🍌", summary: "Botanically berries, strawberries aren't!", category: "Science", color: "#34D399" }]); }
     setNewsLoading(false);
   };
-  useEffect(() => { if (activeTab === 5 && moreSubTab === "news" && newsStories.length === 0 && !newsLoading) fetchNews(); }, [activeTab, moreSubTab]);
+  useEffect(() => { if (activeTab === 6 && moreSubTab === "news" && newsStories.length === 0 && !newsLoading) fetchNews(); }, [activeTab, moreSubTab]);
 
   // ─── HOME ─────────────────────────────────────────────────────────────
   const HomeTab = () => {
@@ -1279,7 +1279,7 @@ export default function AvasWorld() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6, marginBottom: 10 }}>
         <div onClick={() => { setActiveTab(5); setMoreSubTab("love"); }} style={{ cursor: "pointer", padding: 10, background: "linear-gradient(135deg,#FDF2F8,#FCE7F3)", borderRadius: 11, textAlign: "center" }}><div style={{ fontSize: 20 }}>💕</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 9, color: "#9D174D", fontWeight: 600 }}>💋{todayLove.kisses} ❤️{todayLove.loveyous}</div></div>
         <div onClick={() => { setActiveTab(1); setStudySubTab("stem"); }} style={{ cursor: "pointer", padding: 10, background: "linear-gradient(135deg,#EDE9FE,#DDD6FE)", borderRadius: 11, textAlign: "center" }}><div style={{ fontSize: 20 }}>🔬</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 9, color: "#5B21B6", fontWeight: 600 }}>STEM Lab</div></div>
-        <div onClick={() => { setActiveTab(5); setMoreSubTab("diary"); }} style={{ cursor: "pointer", padding: 10, background: "linear-gradient(135deg,#FCE7F3,#FBCFE8)", borderRadius: 11, textAlign: "center" }}><div style={{ fontSize: 20 }}>📓</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 9, color: "#9D174D", fontWeight: 600 }}>Diary +3⭐</div></div>
+        <div onClick={() => setActiveTab(2)} style={{ cursor: "pointer", padding: 10, background: "linear-gradient(135deg,#FCE7F3,#FBCFE8)", borderRadius: 11, textAlign: "center" }}><div style={{ fontSize: 20 }}>📓</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 9, color: "#9D174D", fontWeight: 600 }}>Diary +3⭐</div></div>
         <div onClick={() => setActiveTab(3)} style={{ cursor: "pointer", padding: 10, background: "linear-gradient(135deg,#DBEAFE,#BFDBFE)", borderRadius: 11, textAlign: "center" }}><div style={{ fontSize: 20 }}>💬</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 9, color: "#1D4ED8", fontWeight: 600 }}>Chat Room</div></div>
       </div>
       {starsNeeded && <div style={{ padding: 10, background: "linear-gradient(135deg,#FFF7ED,#FFEDD5)", borderRadius: 11, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}><div style={{ fontSize: 22 }}>{starsNeeded.emoji}</div><div style={{ flex: 1 }}><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 11, fontWeight: 600, color: "#92400E" }}>Next: {starsNeeded.name}</div><div style={{ height: 5, borderRadius: 3, background: "#FDE68A", marginTop: 3, overflow: "hidden" }}><div style={{ height: "100%", borderRadius: 3, background: "linear-gradient(90deg,#FBBF24,#F59E0B)", width: `${Math.min(100, (totalStars / starsNeeded.stars) * 100)}%` }} /></div></div></div>}
@@ -1510,11 +1510,10 @@ export default function AvasWorld() {
   };
 
   const MorePanel = () => {
-    const tabs = [{ key: "games", icon: "🎮", label: "Game" }, { key: "diary", icon: "📓", label: "Diary" }, { key: "news", icon: "📰", label: "News" }, { key: "love", icon: "💕", label: "Love" }];
+    const tabs = [{ key: "games", icon: "🎮", label: "Game" }, { key: "news", icon: "📰", label: "News" }, { key: "love", icon: "💕", label: "Love" }];
     return <div>
       <SubTabBar tabs={tabs} value={moreSubTab} onChange={setMoreSubTab} />
       {moreSubTab === "games" && <MoreGamesTab />}
-      {moreSubTab === "diary" && DiaryTab()}
       {moreSubTab === "news" && NewsTab()}
       {moreSubTab === "love" && <LoveTab loveLog={loveLog} onKiss={handleKiss} onLoveYou={handleLoveYou} />}
     </div>;
@@ -1524,10 +1523,11 @@ export default function AvasWorld() {
     switch(activeTab) {
       case 0: return HomeTab();
       case 1: return <StudyPanel />;
-      case 2: return MusicTab();
+      case 2: return DiaryTab();
       case 3: return <ChatRoom account={account} />;
-      case 4: return RewardTab();
-      case 5: return <MorePanel />;
+      case 4: return MusicTab();
+      case 5: return RewardTab();
+      case 6: return <MorePanel />;
       default: return HomeTab();
     }
   };
