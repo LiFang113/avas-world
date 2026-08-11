@@ -84,6 +84,32 @@ export const searchAccounts = async (query, currentUserId, friendIds = []) => {
     .slice(0, 8);
 };
 
+export const resolveRecipientIds = async friends => {
+  const ids = new Set(friends.map(friend => friend.id).filter(Boolean));
+  if (!supabase) return [...ids];
+
+  const names = [...new Set(friends.map(friend => normalizeAccountName(friend.name)).filter(Boolean))];
+  if (names.length === 0) return [...ids];
+
+  const { data, error } = await supabase
+    .from("ava_accounts")
+    .select("id,search_name")
+    .in("search_name", names);
+  if (error) return [...ids];
+  (data || []).forEach(account => ids.add(account.id));
+  return [...ids];
+};
+
+export const mergeFriendsByName = friends => {
+  const seen = new Set();
+  return friends.filter(friend => {
+    const key = normalizeAccountName(friend.name) || friend.id;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
 export const loadFriends = async userId => {
   if (!supabase) return null;
   const { data: links, error } = await supabase.from("ava_friendships").select("friend_id").eq("owner_id", userId);

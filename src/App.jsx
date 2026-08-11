@@ -4,7 +4,9 @@ import {
   createUserId,
   loadChatMessages,
   loadFriends,
+  mergeFriendsByName,
   normalizeAccountName,
+  resolveRecipientIds,
   saveAccount,
   saveFriends,
   searchAccounts,
@@ -807,7 +809,7 @@ function ChatRoom({ account }) {
           setAvatar(p.avatar);
           setAge(p.age || null);
           const backendFriends = await loadFriends(p.userId || userId.current);
-          setFriends(backendFriends || p.friends || []);
+          setFriends(mergeFriendsByName(backendFriends || p.friends || []));
           userColor.current = p.color || CHAT_COLORS[0];
           userId.current = p.userId || userId.current;
         } else if (account) {
@@ -815,7 +817,7 @@ function ChatRoom({ account }) {
           setAvatar(account.avatar);
           setAge(account.age || null);
           const backendFriends = await loadFriends(account.userId || userId.current);
-          setFriends(backendFriends || account.friends || []);
+          setFriends(mergeFriendsByName(backendFriends || account.friends || []));
           userColor.current = account.color || userColor.current;
           userId.current = account.userId || userId.current;
         }
@@ -853,7 +855,7 @@ function ChatRoom({ account }) {
 
   const addFriend = async friend => {
     const nextFriend = { id: friend.id, name: friend.name, age: friend.age, avatar: friend.avatar, color: friend.color };
-    const nextFriends = [...friends, nextFriend];
+    const nextFriends = mergeFriendsByName([...friends, nextFriend]);
     await saveProfile(nickname, avatar, age, nextFriends);
     setFriendSearch("");
     setFriendResults([]);
@@ -917,7 +919,7 @@ function ChatRoom({ account }) {
       color: userColor.current,
       text: text.trim(),
       time: Date.now(),
-      recipientIds: friends.map(f => f.id),
+      recipientIds: await resolveRecipientIds(friends),
     };
     try {
       await sendChatMessage(msg);
@@ -951,8 +953,10 @@ function ChatRoom({ account }) {
   const visibleMessages = messages.filter(msg => {
     const sentByFriend = friendIds.has(msg.userId);
     const sentByMe = msg.userId === userId.current;
-    const sentToMe = !msg.recipientIds || msg.recipientIds.includes(userId.current);
-    return sentByMe || (sentByFriend && sentToMe);
+    const recipientIds = msg.recipientIds || [];
+    const sentToMe = recipientIds.includes(userId.current);
+    const legacyFriendMessage = sentByFriend && recipientIds.length === 0;
+    return sentByMe || sentToMe || legacyFriendMessage;
   });
   const canChat = friends.length > 0;
   return (
