@@ -561,7 +561,7 @@ function DrawingGame({onBack}){
 function MemoryGame({onBack,theme,onWin}){const emojis=CARD_SETS[theme]||CARD_SETS["🌸 Cherry Blossom"];const[cards,setCards]=useState([]);const[flipped,setFlipped]=useState([]);const[matched,setMatched]=useState([]);const[moves,setMoves]=useState(0);const[won,setWon]=useState(false);const init=useCallback(()=>{setCards([...emojis,...emojis].sort(()=>Math.random()-.5).map((e,i)=>({id:i,emoji:e})));setFlipped([]);setMatched([]);setMoves(0);setWon(false)},[emojis]);useEffect(()=>{init()},[init]);useEffect(()=>{if(!won&&matched.length===emojis.length*2&&matched.length>0){setWon(true);onWin()}},[won,matched,emojis.length,onWin]);useEffect(()=>{if(flipped.length===2){const[a,b]=flipped;if(cards[a].emoji===cards[b].emoji)setMatched(m=>[...m,a,b]);setTimeout(()=>setFlipped([]),600)}},[flipped,cards]);const handleFlip=i=>{if(flipped.length>=2||flipped.includes(i)||matched.includes(i))return;setFlipped(f=>[...f,i]);setMoves(m=>m+1)};const th=GAME_THEMES.find(t=>t.name===theme);const c=th?.colors||["#FFC0CB","#FF69B4","#FFB7C5"];return(<div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><button onClick={onBack} style={S.backBtn}>← Back</button><span style={{fontFamily:"'Fredoka',sans-serif",color:"#6B7280",fontSize:13}}>Moves:{moves}</span><button onClick={init} style={{...S.backBtn,background:c[0]+"30",color:c[1]}}>🔄</button></div>{won&&<div style={{textAlign:"center",padding:14,background:`linear-gradient(135deg,${c[0]},${c[1]})`,borderRadius:14,marginBottom:10}}><div style={{fontSize:32}}>🎉</div><div style={{fontFamily:"'Fredoka',sans-serif",fontSize:18,color:"#fff",fontWeight:600}}>Amazing! +15⭐</div></div>}<div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7}}>{cards.map((card,i)=>{const isF=flipped.includes(i)||matched.includes(i);return <div key={i} onClick={()=>handleFlip(i)} style={{height:64,borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",fontSize:isF?24:18,cursor:"pointer",background:matched.includes(i)?`${c[2]}40`:isF?"#FFF":`linear-gradient(135deg,${c[0]},${c[1]})`,border:`2px solid ${matched.includes(i)?c[1]:"#E5E7EB"}`,boxShadow:isF?"0 2px 6px rgba(0,0,0,.06)":`0 3px 8px ${c[1]}25`,transition:"all .3s"}}>{isF?card.emoji:"✨"}</div>})}</div></div>)}
 function MathGame({onBack,onScore}){const[score,setScore]=useState(0);const[q,setQ]=useState(null);const[fb,setFb]=useState(null);const[streak,setStreak]=useState(0);const pendingRef=useRef(0);const gen=()=>{const ops=["+","-","×"];const op=ops[Math.floor(Math.random()*ops.length)];let a,b,ans;if(op==="+"){a=Math.floor(Math.random()*50)+1;b=Math.floor(Math.random()*50)+1;ans=a+b}else if(op==="-"){a=Math.floor(Math.random()*50)+10;b=Math.floor(Math.random()*a);ans=a-b}else{a=Math.floor(Math.random()*12)+1;b=Math.floor(Math.random()*12)+1;ans=a*b}const ch=[ans];while(ch.length<4){const w=ans+(Math.floor(Math.random()*10)-5);if(w!==ans&&w>=0&&!ch.includes(w))ch.push(w)}ch.sort(()=>Math.random()-.5);setQ({a,b,op,answer:ans,choices:ch});setFb(null)};const flushScore=useCallback(()=>{if(pendingRef.current>0){onScore(pendingRef.current);pendingRef.current=0}},[onScore]);useEffect(()=>{gen();return flushScore},[flushScore]);const handle=c=>{if(fb||!q)return;if(c===q.answer){setScore(s=>s+10);setStreak(s=>s+1);setFb("correct");pendingRef.current+=2;setTimeout(gen,800)}else{setStreak(0);setFb("wrong");setTimeout(()=>setFb(null),800)}};const creatures=["🦊","🐉","🦄","🐬","🦋","🐧"];return(<div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><button onClick={()=>{flushScore();onBack()}} style={S.backBtn}>← Back</button><div style={{display:"flex",gap:10,alignItems:"center"}}><span style={{fontFamily:"'Fredoka',sans-serif",color:"#FF6B6B",fontWeight:600,fontSize:13}}>🏆{score}</span>{streak>=3&&<span style={{fontFamily:"'Fredoka',sans-serif",color:"#FBBF24",fontWeight:600,fontSize:12}}>🔥{streak}x</span>}</div></div><div style={{textAlign:"center",padding:20,background:"linear-gradient(135deg,#FFF1F2,#FFE4E6)",borderRadius:18}}><div style={{fontSize:42,marginBottom:4}}>{creatures[(score/10)%creatures.length|0]}</div>{q&&<><div style={{fontFamily:"'Fredoka',sans-serif",fontSize:32,color:"#1F2937",fontWeight:700,marginBottom:16}}>{q.a} {q.op} {q.b} = ?</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,maxWidth:240,margin:"0 auto"}}>{q.choices.map((c,i)=><button key={i} onClick={()=>handle(c)} style={{padding:"12px 0",borderRadius:11,border:"none",fontSize:18,fontFamily:"'Fredoka',sans-serif",fontWeight:600,cursor:"pointer",background:"#FFF",color:"#1F2937",boxShadow:"0 2px 6px rgba(0,0,0,.05)"}}>{c}</button>)}</div></>}{fb&&<div style={{marginTop:12,fontFamily:"'Fredoka',sans-serif",fontSize:18,color:fb==="correct"?"#34D399":"#FF6B6B",fontWeight:600}}>{fb==="correct"?"✨ Correct! +2⭐":"Oops! Try again!"}</div>}</div></div>)}
 
-function PracticeQuiz({title,icon,color,questions,onBack,onScore}){
+function PracticeQuiz({title,icon,color,questions,onBack,onScore,rewardStars=2}){
   const [idx,setIdx]=useState(0);
   const [fb,setFb]=useState(null);
   const [score,setScore]=useState(0);
@@ -574,7 +574,7 @@ function PracticeQuiz({title,icon,color,questions,onBack,onScore}){
     if(fb)return;
     const correct=choice===q.answer;
     setFb(correct?"correct":"wrong");
-    if(correct){setScore(s=>s+10);pendingRef.current+=2;setTimeout(next,1100)}
+    if(correct){setScore(s=>s+10);pendingRef.current+=rewardStars;setTimeout(next,1100)}
   };
   return <div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
@@ -586,7 +586,7 @@ function PracticeQuiz({title,icon,color,questions,onBack,onScore}){
         <div style={{width:42,height:42,borderRadius:11,background:`${color}20`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>{icon}</div>
         <div>
           <div style={{fontFamily:"'Fredoka',sans-serif",fontSize:16,fontWeight:700,color:"#1F2937"}}>{title}</div>
-          <div style={{fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#6B7280"}}>Grade 3 practice - +2 stars each</div>
+          <div style={{fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#6B7280"}}>Grade 3 practice - +{rewardStars} stars each</div>
         </div>
       </div>
       {q.visual&&<div style={{whiteSpace:"pre-line",textAlign:"center",fontFamily:"'Fredoka',sans-serif",fontSize:44,lineHeight:1.1,color,margin:"6px 0 10px"}}>{q.visual}</div>}
@@ -595,7 +595,7 @@ function PracticeQuiz({title,icon,color,questions,onBack,onScore}){
         {q.choices.map((choice,i)=><button key={i} onClick={()=>handle(choice)} style={{minHeight:44,padding:"9px 7px",borderRadius:11,border:"none",background:"#FFF",color:"#1F2937",fontFamily:"'Fredoka',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,.05)"}}>{choice}</button>)}
       </div>
       {fb&&<div style={{marginTop:10,padding:9,borderRadius:10,background:fb==="correct"?"#F0FDF4":"#FEF2F2",fontFamily:"'Nunito',sans-serif",fontSize:12,lineHeight:1.4,color:fb==="correct"?"#047857":"#B91C1C"}}>
-        <b style={{fontFamily:"'Fredoka',sans-serif"}}>{fb==="correct"?"Correct! +2 stars":"Try again!"}</b> {fb==="correct"?q.why:"Look carefully and choose another answer."}
+        <b style={{fontFamily:"'Fredoka',sans-serif"}}>{fb==="correct"?`Correct! +${rewardStars} stars`:"Try again!"}</b> {fb==="correct"?q.why:"Look carefully and choose another answer."}
       </div>}
     </div>
     <div style={{display:"flex",gap:6}}>
@@ -605,22 +605,21 @@ function PracticeQuiz({title,icon,color,questions,onBack,onScore}){
   </div>;
 }
 
-function MathApplicationGame({onBack,onScore}){return <PracticeQuiz title="Math Applications" icon="🛒" color="#10B981" questions={MATH_APPLICATION_QUESTIONS} onBack={onBack} onScore={onScore}/>;}
+function MathApplicationGame({onBack,onScore}){return <PracticeQuiz title="Math Applications" icon="🛒" color="#10B981" questions={MATH_APPLICATION_QUESTIONS} onBack={onBack} onScore={onScore} rewardStars={5}/>;}
 function ShapesGame({onBack,onScore}){return <PracticeQuiz title="Shapes & Space" icon="🔷" color="#3B82F6" questions={SHAPE_QUESTIONS} onBack={onBack} onScore={onScore}/>;}
 
-function RiddleGame({onBack,onScore}){
+function RiddleGame({onBack,onScore,solvedRiddles,onSolveRiddle}){
   const[idx,setIdx]=useState(()=>Math.floor(Math.random()*RIDDLES.length));
   const[showAnswer,setShowAnswer]=useState(false);
   const[showHint,setShowHint]=useState(false);
-  const[solved,setSolved]=useState(0);
-  const[tried,setTried]=useState(new Set());
   const[pendingStars,setPendingStars]=useState(0);
   const pendingStarsRef=useRef(0);
   const riddle=RIDDLES[idx];
   const flushRiddleScore=useCallback(()=>{if(pendingStarsRef.current>0){onScore(pendingStarsRef.current);pendingStarsRef.current=0;setPendingStars(0)}},[onScore]);
   useEffect(()=>flushRiddleScore,[flushRiddleScore]);
   const next=()=>{flushRiddleScore();let n;do{n=Math.floor(Math.random()*RIDDLES.length)}while(n===idx&&RIDDLES.length>1);setIdx(n);setShowAnswer(false);setShowHint(false)};
-  const reveal=()=>{if(!showAnswer){setShowAnswer(true);if(!tried.has(idx)){setTried(p=>new Set([...p,idx]));setSolved(s=>s+1);pendingStarsRef.current+=3;setPendingStars(p=>p+3)}}};
+  const solved = Object.keys(solvedRiddles || {}).length;
+  const reveal=()=>{if(!showAnswer){setShowAnswer(true);if(!solvedRiddles?.[idx]){onSolveRiddle(idx);pendingStarsRef.current+=3;setPendingStars(p=>p+3)}}};
   return(<div>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
       <button onClick={()=>{flushRiddleScore();onBack()}} style={S.backBtn}>← Back</button>
@@ -1372,6 +1371,7 @@ export default function AvasWorld() {
   const [newsStories, setNewsStories] = useState([]);
   const [newsLoading, setNewsLoading] = useState(false);
   const [newsError, setNewsError] = useState(null);
+  const [solvedRiddles, setSolvedRiddles] = useState({});
   const [dayStreak] = useState(5);
   const [showChat, setShowChat] = useState(false);
   const [loveLog, setLoveLog] = useState(INITIAL_LOVE_LOG);
@@ -1445,6 +1445,8 @@ export default function AvasWorld() {
             if (d.charIndex !== undefined) setCharIndex(d.charIndex);
             if (d.chineseLevel) setChineseLevel(Math.min(CHINESE_LEVEL_SIZES.length, Math.max(1, d.chineseLevel)));
             if (d.learnedChineseChars) setLearnedChineseChars(d.learnedChineseChars);
+            if (d.newsStories) setNewsStories(d.newsStories);
+            if (d.solvedRiddles) setSolvedRiddles(d.solvedRiddles);
           }
         }
       } catch (e) {
@@ -1493,12 +1495,12 @@ export default function AvasWorld() {
       try {
         await window.storage.set("ava-world-data", JSON.stringify({
           totalStars, completedTasks, unlockedItems, loveLog,
-          diaryEntries, rewards, claimedRewards, songs, charIndex, chineseLevel, learnedChineseChars
+          diaryEntries, rewards, claimedRewards, songs, charIndex, chineseLevel, learnedChineseChars, newsStories, solvedRiddles
         }));
       } catch (e) { /* storage unavailable */ }
     };
     save();
-  }, [dataLoaded, hasAccount, totalStars, completedTasks, unlockedItems, loveLog, diaryEntries, rewards, claimedRewards, songs, charIndex, chineseLevel, learnedChineseChars]);
+  }, [dataLoaded, hasAccount, totalStars, completedTasks, unlockedItems, loveLog, diaryEntries, rewards, claimedRewards, songs, charIndex, chineseLevel, learnedChineseChars, newsStories, solvedRiddles]);
 
   const now = new Date();
   const greetingTime = now.getHours() < 12 ? "Good Morning" : now.getHours() < 17 ? "Good Afternoon" : "Good Evening";
@@ -1518,6 +1520,8 @@ export default function AvasWorld() {
   const handleLoveYou = useCallback(() => { setLoveLog(prev => { const key = makeDateKey(new Date()); const cur = prev[key] || { kisses: 0, loveyous: 0 }; return { ...prev, [key]: { ...cur, loveyous: cur.loveyous + 1 } }; }); }, []);
   const handleDiaryImage = e => { const f = e.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = ev => setDiaryImages(p => [...p, ev.target.result]); r.readAsDataURL(f); };
   const saveDiary = () => { if (!diaryText.trim()) return; setDiaryEntries(p => [{ id: Date.now(), date: now.toISOString().split("T")[0], text: diaryText, mood: diaryMood, images: diaryImages, tags: diaryText.toLowerCase().match(/#(\w+)/g)?.map(t => t.slice(1)) || [] }, ...p]); setDiaryText(""); setDiaryMood("😊"); setDiaryImages([]); setDiaryWriting(false); addStars(3); };
+
+  const handleSolveRiddle = useCallback(idx => setSolvedRiddles(p => ({ ...p, [idx]: true })), []);
 
   const fetchNews = async () => {
     setNewsLoading(true); setNewsError(null);
@@ -1768,7 +1772,7 @@ export default function AvasWorld() {
   const GamesTab = () => {
     if (activeGame === "memory") return <MemoryGame onBack={() => setActiveGame(null)} theme={selectedGameTheme} onWin={handleMemoryWin} />;
     if (activeGame === "math") return <MathGame onBack={() => setActiveGame(null)} onScore={handleMathScore} />;
-    if (activeGame === "riddle") return <RiddleGame onBack={() => setActiveGame(null)} onScore={handleRiddleScore} />;
+    if (activeGame === "riddle") return <RiddleGame onBack={() => setActiveGame(null)} onScore={handleRiddleScore} solvedRiddles={solvedRiddles} onSolveRiddle={handleSolveRiddle} />;
     if (activeGame === "tongue") return <TongueTwisterGame onBack={() => setActiveGame(null)} />;
     if (activeGame === "joke") return <JokeGame onBack={() => setActiveGame(null)} />;
     return <div><div style={S.sectionHeader}><span>🎮 Games & Fun</span><span style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 13, color: "#FBBF24" }}>⭐{totalStars}</span></div>
@@ -1843,7 +1847,7 @@ export default function AvasWorld() {
 
   const MoreGamesTab = () => {
     if (activeGame === "memory") return <MemoryGame onBack={() => setActiveGame(null)} theme={selectedGameTheme} onWin={handleMemoryWin} />;
-    if (activeGame === "riddle") return <RiddleGame onBack={() => setActiveGame(null)} onScore={handleRiddleScore} />;
+    if (activeGame === "riddle") return <RiddleGame onBack={() => setActiveGame(null)} onScore={handleRiddleScore} solvedRiddles={solvedRiddles} onSolveRiddle={handleSolveRiddle} />;
     if (activeGame === "tongue") return <TongueTwisterGame onBack={() => setActiveGame(null)} />;
     if (activeGame === "joke") return <JokeGame onBack={() => setActiveGame(null)} />;
     if (activeGame === "drawing") return <DrawingGame onBack={() => setActiveGame(null)} />;
