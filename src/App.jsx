@@ -46,8 +46,8 @@ if (typeof window !== "undefined" && !storageApi) {
   };
 }
 
-const TABS = ["🏠","📚","📓","💬","🎵","🏆","📦"];
-const TAB_LABELS = ["Home","Study","Diary","Chat","Music","Reward","More"];
+const TABS = ["🏠","📚","📓","💬","🎵","📰","🏆","📦"];
+const TAB_LABELS = ["Home","Study","Diary","Chat","Music","News","Reward","More"];
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 const SHORT_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -82,6 +82,26 @@ const CHINESE_CHARS = [
   {char:"女",pinyin:"nǚ",meaning:"Woman / Girl",sentence:"女孩 — Girl",funFact:"Shows a graceful figure! 💃",strokeCount:3,strokeNames:["Left-falling-curve","Left-falling","Horizontal"]},
   {char:"子",pinyin:"zǐ",meaning:"Child",sentence:"孩子 — Child",funFact:"A baby with arms out!",strokeCount:3,strokeNames:["Horizontal-hook","Vertical","Horizontal"]},
   {char:"爱",pinyin:"ài",meaning:"Love",sentence:"我爱你 — I love you",funFact:"Has a 'heart' (心) hidden inside! 💕",strokeCount:10,strokeNames:["Left-falling","Horizontal","Vertical","Horizontal","Left-short","Horizontal","Left-falling","Dot","Left-dot","Right-dot"]},
+];
+
+const CHINESE_LEVEL_SIZES = [6, 12, CHINESE_CHARS.length];
+
+const MATH_APPLICATION_QUESTIONS = [
+  { prompt: "Ava reads 18 pages on Monday and 27 pages on Tuesday. How many pages did she read in all?", answer: 45, choices: [35, 45, 54, 46], why: "Add both days: 18 + 27 = 45 pages." },
+  { prompt: "There are 6 tables with 4 students at each table. How many students are there?", answer: 24, choices: [10, 20, 24, 28], why: "Equal groups: 6 x 4 = 24 students." },
+  { prompt: "A movie starts at 2:15 and lasts 45 minutes. What time does it end?", answer: "3:00", choices: ["2:45", "3:00", "3:15", "4:00"], why: "45 minutes after 2:15 is 3:00." },
+  { prompt: "Mia has $5. She buys a snack for $2.35. How much money is left?", answer: "$2.65", choices: ["$2.35", "$2.65", "$3.65", "$7.35"], why: "$5.00 - $2.35 = $2.65." },
+  { prompt: "A ribbon is 36 inches long. Ava cuts it into 4 equal pieces. How long is each piece?", answer: 9, choices: [6, 8, 9, 12], why: "Divide into equal parts: 36 / 4 = 9 inches." },
+  { prompt: "A garden has 5 rows with 8 carrots in each row. How many carrots are in the garden?", answer: 40, choices: [13, 35, 40, 45], why: "Arrays use multiplication: 5 x 8 = 40." },
+];
+
+const SHAPE_QUESTIONS = [
+  { prompt: "Which 2-D shape has 4 equal sides and 4 square corners?", answer: "Square", choices: ["Rectangle", "Triangle", "Square", "Hexagon"], visual: "□", why: "A square has 4 equal sides and 4 right angles." },
+  { prompt: "Which 3-D shape has 6 square faces?", answer: "Cube", choices: ["Cube", "Sphere", "Cone", "Cylinder"], visual: "▣", why: "A cube is built from 6 equal square faces." },
+  { prompt: "A triangle slides 3 spaces right. Did it turn?", answer: "No, it translated", choices: ["Yes, it rotated", "No, it translated", "Yes, it flipped", "It got larger"], visual: "△ →", why: "A slide is a translation, so the shape keeps the same direction." },
+  { prompt: "Which object is above the star?", answer: "Circle", choices: ["Circle", "Square", "Triangle", "Cube"], visual: "○\n★", why: "Above means higher on the page." },
+  { prompt: "What movement turns a shape around a point?", answer: "Rotation", choices: ["Reflection", "Rotation", "Translation", "Partition"], visual: "↻", why: "A rotation turns a shape." },
+  { prompt: "Which 3-D shape has two circular faces and one curved surface?", answer: "Cylinder", choices: ["Cone", "Cylinder", "Pyramid", "Sphere"], visual: "◉", why: "A cylinder has 2 circles and a curved side." },
 ];
 
 const GAME_THEMES = [
@@ -541,6 +561,53 @@ function DrawingGame({onBack}){
 function MemoryGame({onBack,theme,onWin}){const emojis=CARD_SETS[theme]||CARD_SETS["🌸 Cherry Blossom"];const[cards,setCards]=useState([]);const[flipped,setFlipped]=useState([]);const[matched,setMatched]=useState([]);const[moves,setMoves]=useState(0);const[won,setWon]=useState(false);const init=useCallback(()=>{setCards([...emojis,...emojis].sort(()=>Math.random()-.5).map((e,i)=>({id:i,emoji:e})));setFlipped([]);setMatched([]);setMoves(0);setWon(false)},[emojis]);useEffect(()=>{init()},[init]);useEffect(()=>{if(!won&&matched.length===emojis.length*2&&matched.length>0){setWon(true);onWin()}},[won,matched,emojis.length,onWin]);useEffect(()=>{if(flipped.length===2){const[a,b]=flipped;if(cards[a].emoji===cards[b].emoji)setMatched(m=>[...m,a,b]);setTimeout(()=>setFlipped([]),600)}},[flipped,cards]);const handleFlip=i=>{if(flipped.length>=2||flipped.includes(i)||matched.includes(i))return;setFlipped(f=>[...f,i]);setMoves(m=>m+1)};const th=GAME_THEMES.find(t=>t.name===theme);const c=th?.colors||["#FFC0CB","#FF69B4","#FFB7C5"];return(<div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><button onClick={onBack} style={S.backBtn}>← Back</button><span style={{fontFamily:"'Fredoka',sans-serif",color:"#6B7280",fontSize:13}}>Moves:{moves}</span><button onClick={init} style={{...S.backBtn,background:c[0]+"30",color:c[1]}}>🔄</button></div>{won&&<div style={{textAlign:"center",padding:14,background:`linear-gradient(135deg,${c[0]},${c[1]})`,borderRadius:14,marginBottom:10}}><div style={{fontSize:32}}>🎉</div><div style={{fontFamily:"'Fredoka',sans-serif",fontSize:18,color:"#fff",fontWeight:600}}>Amazing! +15⭐</div></div>}<div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:7}}>{cards.map((card,i)=>{const isF=flipped.includes(i)||matched.includes(i);return <div key={i} onClick={()=>handleFlip(i)} style={{height:64,borderRadius:11,display:"flex",alignItems:"center",justifyContent:"center",fontSize:isF?24:18,cursor:"pointer",background:matched.includes(i)?`${c[2]}40`:isF?"#FFF":`linear-gradient(135deg,${c[0]},${c[1]})`,border:`2px solid ${matched.includes(i)?c[1]:"#E5E7EB"}`,boxShadow:isF?"0 2px 6px rgba(0,0,0,.06)":`0 3px 8px ${c[1]}25`,transition:"all .3s"}}>{isF?card.emoji:"✨"}</div>})}</div></div>)}
 function MathGame({onBack,onScore}){const[score,setScore]=useState(0);const[q,setQ]=useState(null);const[fb,setFb]=useState(null);const[streak,setStreak]=useState(0);const pendingRef=useRef(0);const gen=()=>{const ops=["+","-","×"];const op=ops[Math.floor(Math.random()*ops.length)];let a,b,ans;if(op==="+"){a=Math.floor(Math.random()*50)+1;b=Math.floor(Math.random()*50)+1;ans=a+b}else if(op==="-"){a=Math.floor(Math.random()*50)+10;b=Math.floor(Math.random()*a);ans=a-b}else{a=Math.floor(Math.random()*12)+1;b=Math.floor(Math.random()*12)+1;ans=a*b}const ch=[ans];while(ch.length<4){const w=ans+(Math.floor(Math.random()*10)-5);if(w!==ans&&w>=0&&!ch.includes(w))ch.push(w)}ch.sort(()=>Math.random()-.5);setQ({a,b,op,answer:ans,choices:ch});setFb(null)};const flushScore=useCallback(()=>{if(pendingRef.current>0){onScore(pendingRef.current);pendingRef.current=0}},[onScore]);useEffect(()=>{gen();return flushScore},[flushScore]);const handle=c=>{if(fb||!q)return;if(c===q.answer){setScore(s=>s+10);setStreak(s=>s+1);setFb("correct");pendingRef.current+=2;setTimeout(gen,800)}else{setStreak(0);setFb("wrong");setTimeout(()=>setFb(null),800)}};const creatures=["🦊","🐉","🦄","🐬","🦋","🐧"];return(<div><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}><button onClick={()=>{flushScore();onBack()}} style={S.backBtn}>← Back</button><div style={{display:"flex",gap:10,alignItems:"center"}}><span style={{fontFamily:"'Fredoka',sans-serif",color:"#FF6B6B",fontWeight:600,fontSize:13}}>🏆{score}</span>{streak>=3&&<span style={{fontFamily:"'Fredoka',sans-serif",color:"#FBBF24",fontWeight:600,fontSize:12}}>🔥{streak}x</span>}</div></div><div style={{textAlign:"center",padding:20,background:"linear-gradient(135deg,#FFF1F2,#FFE4E6)",borderRadius:18}}><div style={{fontSize:42,marginBottom:4}}>{creatures[(score/10)%creatures.length|0]}</div>{q&&<><div style={{fontFamily:"'Fredoka',sans-serif",fontSize:32,color:"#1F2937",fontWeight:700,marginBottom:16}}>{q.a} {q.op} {q.b} = ?</div><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,maxWidth:240,margin:"0 auto"}}>{q.choices.map((c,i)=><button key={i} onClick={()=>handle(c)} style={{padding:"12px 0",borderRadius:11,border:"none",fontSize:18,fontFamily:"'Fredoka',sans-serif",fontWeight:600,cursor:"pointer",background:"#FFF",color:"#1F2937",boxShadow:"0 2px 6px rgba(0,0,0,.05)"}}>{c}</button>)}</div></>}{fb&&<div style={{marginTop:12,fontFamily:"'Fredoka',sans-serif",fontSize:18,color:fb==="correct"?"#34D399":"#FF6B6B",fontWeight:600}}>{fb==="correct"?"✨ Correct! +2⭐":"Oops! Try again!"}</div>}</div></div>)}
 
+function PracticeQuiz({title,icon,color,questions,onBack,onScore}){
+  const [idx,setIdx]=useState(0);
+  const [fb,setFb]=useState(null);
+  const [score,setScore]=useState(0);
+  const pendingRef=useRef(0);
+  const q=questions[idx%questions.length];
+  const flushScore=useCallback(()=>{if(pendingRef.current>0){onScore(pendingRef.current);pendingRef.current=0}},[onScore]);
+  useEffect(()=>flushScore,[flushScore]);
+  const next=()=>{setIdx(i=>(i+1)%questions.length);setFb(null)};
+  const handle=choice=>{
+    if(fb)return;
+    const correct=choice===q.answer;
+    setFb(correct?"correct":"wrong");
+    if(correct){setScore(s=>s+10);pendingRef.current+=2;setTimeout(next,1100)}
+  };
+  return <div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+      <button onClick={()=>{flushScore();onBack()}} style={S.backBtn}>Back</button>
+      <span style={{fontFamily:"'Fredoka',sans-serif",fontSize:13,fontWeight:700,color}}> {icon} {score}</span>
+    </div>
+    <div style={{padding:16,borderRadius:18,background:`linear-gradient(135deg,${color}18,#FFFFFF)`,border:`2px solid ${color}22`,marginBottom:10}}>
+      <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:10}}>
+        <div style={{width:42,height:42,borderRadius:11,background:`${color}20`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22}}>{icon}</div>
+        <div>
+          <div style={{fontFamily:"'Fredoka',sans-serif",fontSize:16,fontWeight:700,color:"#1F2937"}}>{title}</div>
+          <div style={{fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#6B7280"}}>Grade 3 practice - +2 stars each</div>
+        </div>
+      </div>
+      {q.visual&&<div style={{whiteSpace:"pre-line",textAlign:"center",fontFamily:"'Fredoka',sans-serif",fontSize:44,lineHeight:1.1,color,margin:"6px 0 10px"}}>{q.visual}</div>}
+      <div style={{fontFamily:"'Fredoka',sans-serif",fontSize:18,fontWeight:700,color:"#1F2937",lineHeight:1.35,marginBottom:12}}>{q.prompt}</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7}}>
+        {q.choices.map((choice,i)=><button key={i} onClick={()=>handle(choice)} style={{minHeight:44,padding:"9px 7px",borderRadius:11,border:"none",background:"#FFF",color:"#1F2937",fontFamily:"'Fredoka',sans-serif",fontSize:13,fontWeight:700,cursor:"pointer",boxShadow:"0 2px 6px rgba(0,0,0,.05)"}}>{choice}</button>)}
+      </div>
+      {fb&&<div style={{marginTop:10,padding:9,borderRadius:10,background:fb==="correct"?"#F0FDF4":"#FEF2F2",fontFamily:"'Nunito',sans-serif",fontSize:12,lineHeight:1.4,color:fb==="correct"?"#047857":"#B91C1C"}}>
+        <b style={{fontFamily:"'Fredoka',sans-serif"}}>{fb==="correct"?"Correct! +2 stars":"Try again!"}</b> {fb==="correct"?q.why:"Look carefully and choose another answer."}
+      </div>}
+    </div>
+    <div style={{display:"flex",gap:6}}>
+      <button onClick={next} style={{...BS,flex:1,background:"#F3F4F6",color:"#6B7280"}}>Skip</button>
+      <button onClick={()=>{flushScore();onBack()}} style={{...BS,flex:1,background:`linear-gradient(135deg,${color},${color}CC)`,color:"#FFF"}}>Done</button>
+    </div>
+  </div>;
+}
+
+function MathApplicationGame({onBack,onScore}){return <PracticeQuiz title="Math Applications" icon="🛒" color="#10B981" questions={MATH_APPLICATION_QUESTIONS} onBack={onBack} onScore={onScore}/>;}
+function ShapesGame({onBack,onScore}){return <PracticeQuiz title="Shapes & Space" icon="🔷" color="#3B82F6" questions={SHAPE_QUESTIONS} onBack={onBack} onScore={onScore}/>;}
+
 function RiddleGame({onBack,onScore}){
   const[idx,setIdx]=useState(()=>Math.floor(Math.random()*RIDDLES.length));
   const[showAnswer,setShowAnswer]=useState(false);
@@ -704,6 +771,64 @@ function JokeGame({onBack}){
 // AI CHAT
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function AiChat({onClose}){const[messages,setMessages]=useState([{role:"assistant",text:"Hi Ava! 🌟 Ask me anything!"}]);const[input,setInput]=useState("");const[loading,setLoading]=useState(false);const scrollRef=useRef(null);const[dragY,setDragY]=useState(0);const dragStart=useRef(null);const dragging=useRef(false);useEffect(()=>{scrollRef.current?.scrollTo(0,scrollRef.current.scrollHeight)},[messages]);const send=async()=>{if(!input.trim()||loading)return;const userMsg=input.trim();setInput("");setMessages(m=>[...m,{role:"user",text:userMsg}]);setLoading(true);try{const apiMsgs=[...messages.filter((m,i)=>m.role!=="assistant"||i!==0),{role:"user",content:userMsg}].map(m=>({role:m.role==="assistant"?"assistant":"user",content:m.text||m.content})).slice(-10);const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:"Friendly AI buddy for 8-year-old Ava. Simple fun language, emojis, 2-4 sentences. Educational!",messages:apiMsgs,tools:[{type:"web_search_20250305",name:"web_search"}]})});const data=await res.json();const text=data.content?.filter(b=>b.type==="text").map(b=>b.text).join("")||"Try again! 🌈";setMessages(m=>[...m,{role:"assistant",text}])}catch(e){setMessages(m=>[...m,{role:"assistant",text:"Oops! Try again! 🌀"}])}setLoading(false)};const onTouchStart=e=>{const t=e.touches[0].clientY;dragStart.current=t;dragging.current=false};const onTouchMove=e=>{if(dragStart.current===null)return;const dy=e.touches[0].clientY-dragStart.current;if(dy>10)dragging.current=true;if(dragging.current&&dy>0){setDragY(dy);e.preventDefault()}};const onTouchEnd=()=>{if(dragY>120){onClose()}setDragY(0);dragStart.current=null;dragging.current=false};return(<div style={{position:"fixed",inset:0,zIndex:10000,display:"flex",flexDirection:"column",background:"rgba(0,0,0,.3)"}} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}><div style={{flex:1,display:"flex",flexDirection:"column",background:"#F8F7FF",marginTop:Math.max(0,dragY),borderTopLeftRadius:dragY>0?20:0,borderTopRightRadius:dragY>0?20:0,transition:dragY===0?"margin-top .25s ease":"none",opacity:dragY>80?0.7:1}}><div style={{display:"flex",flexDirection:"column",alignItems:"center",padding:"6px 16px 0",background:"linear-gradient(135deg,#7C3AED,#A78BFA)",flexShrink:0,borderTopLeftRadius:dragY>0?20:0,borderTopRightRadius:dragY>0?20:0}}><div style={{width:36,height:4,borderRadius:2,background:"rgba(255,255,255,.45)",marginBottom:6}} /><div style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%",paddingBottom:10}}><div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:36,height:36,borderRadius:18,background:"rgba(255,255,255,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>🤖</div><div><div style={{fontFamily:"'Fredoka',sans-serif",fontWeight:700,fontSize:16,color:"#FFF"}}>AI Buddy</div><div style={{fontFamily:"'Nunito',sans-serif",fontSize:9,color:"rgba(255,255,255,.6)"}}>Swipe down to close</div></div></div><button onClick={onClose} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:8,padding:"6px 12px",color:"#FFF",fontFamily:"'Fredoka',sans-serif",fontSize:13,cursor:"pointer"}}>✕</button></div></div><div ref={scrollRef} style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"12px 14px",display:"flex",flexDirection:"column",gap:10}}>{messages.map((m,i)=><div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}><div style={{maxWidth:"82%",padding:"10px 14px",borderRadius:16,background:m.role==="user"?"linear-gradient(135deg,#A78BFA,#7C3AED)":"#FFF",color:m.role==="user"?"#FFF":"#1F2937",fontFamily:"'Nunito',sans-serif",fontSize:14,lineHeight:1.5,boxShadow:"0 1px 4px rgba(0,0,0,.05)",borderBottomRightRadius:m.role==="user"?4:16,borderBottomLeftRadius:m.role==="user"?16:4}}>{m.text}</div></div>)}{loading&&<div style={{display:"flex"}}><div style={{padding:"10px 16px",borderRadius:16,background:"#FFF",fontFamily:"'Nunito',sans-serif",fontSize:14,color:"#9CA3AF"}}>Thinking...</div></div>}</div><div style={{padding:"6px 14px",display:"flex",gap:6,overflowX:"auto",flexShrink:0}}>{["Why is sky blue?","Dinosaurs 🦕","How planes fly? ✈️","Fun fact!"].map((s,i)=><button key={i} onClick={()=>setInput(s)} style={{flexShrink:0,padding:"6px 12px",borderRadius:20,border:"1px solid #E5E7EB",background:"#FFF",fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#6B7280",cursor:"pointer",whiteSpace:"nowrap"}}>{s}</button>)}</div><div style={{display:"flex",gap:8,padding:"10px 14px 16px",background:"#FFF",borderTop:"1px solid #F3F4F6",flexShrink:0}}><input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder="Ask anything..." style={{flex:1,padding:"10px 14px",borderRadius:12,border:"2px solid #E5E7EB",fontFamily:"'Nunito',sans-serif",fontSize:14,outline:"none"}}/><button onClick={send} disabled={loading||!input.trim()} style={{padding:"10px 16px",borderRadius:12,border:"none",background:input.trim()?"linear-gradient(135deg,#A78BFA,#7C3AED)":"#E5E7EB",color:input.trim()?"#FFF":"#9CA3AF",fontFamily:"'Fredoka',sans-serif",fontSize:14,fontWeight:600,cursor:"pointer"}}>Send</button></div></div></div>)}
+
+const robertFallback = question => {
+  const q = question.toLowerCase();
+  if (q.includes("bone")) return "Kids have about 300 bones when they are babies, and adults have 206 bones. As kids grow, some bones join together, which is why adults have fewer bones.";
+  if (q.includes("teeth") || q.includes("tooth")) return "Most kids get 20 baby teeth. Adults usually have 32 teeth if their wisdom teeth come in.";
+  if (q.includes("heart")) return "Your heart is a strong muscle that pumps blood around your body. A kid's heart usually beats faster than an adult's heart.";
+  if (q.includes("blood")) return "Blood carries oxygen and food energy around your body, and it helps clean up waste. It is like a delivery system inside you.";
+  if (q.includes("body") || q.includes("human")) return "The human body is made of many teamwork systems: bones hold you up, muscles move you, lungs help you breathe, and your brain helps run the show.";
+  if (q.includes("sky")) return "The sky looks blue because sunlight has many colors, and blue light scatters around the air the most. That blue light reaches your eyes from every direction.";
+  if (q.includes("dinosaur")) return "Dinosaurs lived a very long time ago. Some were huge plant eaters, some were speedy hunters, and birds are their living relatives today.";
+  if (q.includes("plane") || q.includes("fly")) return "Planes fly because their wings push air down and create lift upward. The engines move the plane forward so air keeps rushing over the wings.";
+  if (q.includes("math")) return "Let's solve it step by step. Find the important numbers, choose add, subtract, multiply, or divide, then check if the answer makes sense.";
+  if (q.includes("why")) return "Great why-question. Usually the answer is about a cause: something happens because another thing makes it happen. Tell me one more detail and I can explain it more clearly.";
+  if (q.includes("how many")) return "That is a counting question. I may need the exact thing you mean, but I can help estimate, compare, or solve it step by step.";
+  if (q.includes("how")) return "Good how-question. The best way to answer is step by step: first what starts it, then what changes, then what result we see.";
+  if (q.includes("what")) return "Good question. I can explain what it is, give an example, and then help you remember it with a simple fact.";
+  return "I can help with that. Try asking it with one detail, like the animal, body part, place, number, or thing you want to know about.";
+};
+
+function RobertChat({onClose}){
+  const [messages,setMessages]=useState([{role:"assistant",text:"Hi Ava, I'm Robert AI. Ask me anything!"}]);
+  const [input,setInput]=useState("");
+  const [loading,setLoading]=useState(false);
+  const scrollRef=useRef(null);
+  useEffect(()=>{scrollRef.current?.scrollTo(0,scrollRef.current.scrollHeight)},[messages,loading]);
+  const send=async()=>{
+    const userMsg=input.trim();
+    if(!userMsg||loading)return;
+    setInput("");
+    setMessages(m=>[...m,{role:"user",text:userMsg}]);
+    setLoading(true);
+    let answer="";
+    try{
+      const controller=new AbortController();
+      const timeout=setTimeout(()=>controller.abort(),8000);
+      const apiMsgs=[...messages.filter((m,i)=>m.role!=="assistant"||i!==0),{role:"user",text:userMsg}].map(m=>({role:m.role==="assistant"?"assistant":"user",content:m.text})).slice(-10);
+      const res=await fetch("/api/robert-chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:apiMsgs}),signal:controller.signal});
+      clearTimeout(timeout);
+      if(res.ok){const data=await res.json();answer=data.text||data.message||""}
+    }catch{}
+    setMessages(m=>[...m,{role:"assistant",text:answer||robertFallback(userMsg)}]);
+    setLoading(false);
+  };
+  return <div style={{position:"fixed",inset:0,zIndex:10000,display:"flex",flexDirection:"column",background:"rgba(0,0,0,.3)"}}>
+    <div style={{flex:1,display:"flex",flexDirection:"column",background:"#F8F7FF"}}>
+      <div style={{padding:"12px 16px",background:"linear-gradient(135deg,#7C3AED,#A78BFA)",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}><div style={{width:36,height:36,borderRadius:18,background:"rgba(255,255,255,.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20}}>🤖</div><div><div style={{fontFamily:"'Fredoka',sans-serif",fontWeight:700,fontSize:16,color:"#FFF"}}>Robert AI</div><div style={{fontFamily:"'Nunito',sans-serif",fontSize:9,color:"rgba(255,255,255,.7)"}}>Always answers, even offline</div></div></div>
+        <button onClick={onClose} style={{background:"rgba(255,255,255,.2)",border:"none",borderRadius:8,padding:"6px 12px",color:"#FFF",fontFamily:"'Fredoka',sans-serif",fontSize:13,cursor:"pointer"}}>Close</button>
+      </div>
+      <div ref={scrollRef} style={{flex:1,overflowY:"auto",WebkitOverflowScrolling:"touch",padding:"12px 14px",display:"flex",flexDirection:"column",gap:10}}>
+        {messages.map((m,i)=><div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}><div style={{maxWidth:"82%",padding:"10px 14px",borderRadius:16,background:m.role==="user"?"linear-gradient(135deg,#A78BFA,#7C3AED)":"#FFF",color:m.role==="user"?"#FFF":"#1F2937",fontFamily:"'Nunito',sans-serif",fontSize:14,lineHeight:1.5,boxShadow:"0 1px 4px rgba(0,0,0,.05)"}}>{m.text}</div></div>)}
+        {loading&&<div style={{display:"flex"}}><div style={{padding:"10px 16px",borderRadius:16,background:"#FFF",fontFamily:"'Nunito',sans-serif",fontSize:14,color:"#9CA3AF"}}>Robert is thinking...</div></div>}
+      </div>
+      <div style={{padding:"6px 14px",display:"flex",gap:6,overflowX:"auto",flexShrink:0}}>{["Why is sky blue?","Dinosaurs","How planes fly?","Fun fact!"].map((s,i)=><button key={i} onClick={()=>setInput(s)} style={{flexShrink:0,padding:"6px 12px",borderRadius:20,border:"1px solid #E5E7EB",background:"#FFF",fontFamily:"'Nunito',sans-serif",fontSize:11,color:"#6B7280",cursor:"pointer",whiteSpace:"nowrap"}}>{s}</button>)}</div>
+      <div style={{display:"flex",gap:8,padding:"10px 14px 16px",background:"#FFF",borderTop:"1px solid #F3F4F6",flexShrink:0}}><input value={input} onChange={e=>setInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&send()} placeholder="Ask Robert..." style={{flex:1,padding:"10px 14px",borderRadius:12,border:"2px solid #E5E7EB",fontFamily:"'Nunito',sans-serif",fontSize:14,outline:"none"}}/><button onClick={send} disabled={loading||!input.trim()} style={{padding:"10px 16px",borderRadius:12,border:"none",background:input.trim()?"linear-gradient(135deg,#A78BFA,#7C3AED)":"#E5E7EB",color:input.trim()?"#FFF":"#9CA3AF",fontFamily:"'Fredoka',sans-serif",fontSize:14,fontWeight:600,cursor:input.trim()?"pointer":"default"}}>Send</button></div>
+    </div>
+  </div>;
+}
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // LOVE TAB
@@ -1242,6 +1367,8 @@ export default function AvasWorld() {
   const [unlockedItems, setUnlockedItems] = useState({});
   const [expandedNews, setExpandedNews] = useState(null);
   const [charIndex, setCharIndex] = useState(0);
+  const [chineseLevel, setChineseLevel] = useState(1);
+  const [learnedChineseChars, setLearnedChineseChars] = useState({});
   const [newsStories, setNewsStories] = useState([]);
   const [newsLoading, setNewsLoading] = useState(false);
   const [newsError, setNewsError] = useState(null);
@@ -1285,6 +1412,9 @@ export default function AvasWorld() {
   const [dataLoaded, setDataLoaded] = useState(false);
   const [hasAccount, setHasAccount] = useState(false);
   const [account, setAccount] = useState(null);
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const chatBaselineRef = useRef(null);
+  const chatUnreadIdsRef = useRef(new Set());
 
   // ─── LOAD SAVED DATA ON MOUNT ──────────────────────────────────────
   useEffect(() => {
@@ -1313,6 +1443,8 @@ export default function AvasWorld() {
             if (d.claimedRewards) setClaimedRewards(d.claimedRewards);
             if (d.songs) setSongs(d.songs);
             if (d.charIndex !== undefined) setCharIndex(d.charIndex);
+            if (d.chineseLevel) setChineseLevel(Math.min(CHINESE_LEVEL_SIZES.length, Math.max(1, d.chineseLevel)));
+            if (d.learnedChineseChars) setLearnedChineseChars(d.learnedChineseChars);
           }
         }
       } catch (e) {
@@ -1361,12 +1493,12 @@ export default function AvasWorld() {
       try {
         await window.storage.set("ava-world-data", JSON.stringify({
           totalStars, completedTasks, unlockedItems, loveLog,
-          diaryEntries, rewards, claimedRewards, songs, charIndex
+          diaryEntries, rewards, claimedRewards, songs, charIndex, chineseLevel, learnedChineseChars
         }));
       } catch (e) { /* storage unavailable */ }
     };
     save();
-  }, [dataLoaded, hasAccount, totalStars, completedTasks, unlockedItems, loveLog, diaryEntries, rewards, claimedRewards, songs, charIndex]);
+  }, [dataLoaded, hasAccount, totalStars, completedTasks, unlockedItems, loveLog, diaryEntries, rewards, claimedRewards, songs, charIndex, chineseLevel, learnedChineseChars]);
 
   const now = new Date();
   const greetingTime = now.getHours() < 12 ? "Good Morning" : now.getHours() < 17 ? "Good Afternoon" : "Good Evening";
@@ -1392,7 +1524,45 @@ export default function AvasWorld() {
     try { const res = await fetch("https://api.anthropic.com/v1/messages", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, tools: [{ type: "web_search_20250305", name: "web_search" }], messages: [{ role: "user", content: `News reporter for 8-year-old Ava. Search today's news, create 4 kid stories. ONLY JSON: [{"title":"...","emoji":"🐸","summary":"...","category":"Science"}]` }] }) }); const data = await res.json(); const text = data.content?.filter(b => b.type === "text").map(b => b.text).join("") || ""; const parsed = JSON.parse(text.replace(/```json|```/g, "").trim()); const colors = ["#34D399", "#60A5FA", "#F472B6", "#FBBF24"]; setNewsStories(parsed.map((s, i) => ({ ...s, color: colors[i % 4] }))); } catch { setNewsError("Fun facts instead!"); setNewsStories([{ title: "Honey Never Spoils!", emoji: "🍯", summary: "3,000-year-old honey was still edible!", category: "Fun Facts", color: "#FBBF24" }, { title: "Octopuses Have Blue Blood", emoji: "🐙", summary: "Copper in their blood makes it blue!", category: "Animals", color: "#60A5FA" }, { title: "Venus Days > Years", emoji: "🪐", summary: "One Venus day = 243 Earth days!", category: "Space", color: "#F472B6" }, { title: "Bananas Are Berries!", emoji: "🍌", summary: "Botanically berries, strawberries aren't!", category: "Science", color: "#34D399" }]); }
     setNewsLoading(false);
   };
-  useEffect(() => { if (activeTab === 6 && moreSubTab === "news" && newsStories.length === 0 && !newsLoading) fetchNews(); }, [activeTab, moreSubTab]);
+  useEffect(() => { if (activeTab === 5 && newsStories.length === 0 && !newsLoading) fetchNews(); }, [activeTab, newsStories.length, newsLoading]);
+
+  useEffect(() => {
+    if (!hasAccount || !account?.userId) return;
+    let cancelled = false;
+    const pollUnread = async () => {
+      try {
+        if (activeTab === 3) {
+          chatBaselineRef.current = Date.now();
+          chatUnreadIdsRef.current = new Set();
+          setUnreadChatCount(0);
+          return;
+        }
+        const loaded = await loadChatMessages(account.userId);
+        if (cancelled) return;
+        const incoming = loaded.filter(msg => msg.userId !== account.userId && ((msg.recipientIds || []).includes(account.userId) || (msg.recipientIds || []).length === 0));
+        const latestIncomingTime = incoming.reduce((max, msg) => Math.max(max, Number(msg.time) || 0), 0);
+        if (chatBaselineRef.current === null) {
+          chatBaselineRef.current = latestIncomingTime || Date.now();
+          return;
+        }
+        incoming.forEach(msg => {
+          const msgTime = Number(msg.time) || 0;
+          if (msgTime > chatBaselineRef.current) chatUnreadIdsRef.current.add(msg.id || `${msg.userId}-${msg.time}-${msg.text}`);
+        });
+        setUnreadChatCount(chatUnreadIdsRef.current.size);
+      } catch {}
+    };
+    pollUnread();
+    const id = setInterval(pollUnread, 3000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, [hasAccount, account?.userId, activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== 3) return;
+    chatBaselineRef.current = Date.now();
+    chatUnreadIdsRef.current = new Set();
+    setUnreadChatCount(0);
+  }, [activeTab]);
 
   // ─── HOME ─────────────────────────────────────────────────────────────
   const HomeTab = () => {
@@ -1546,6 +1716,29 @@ export default function AvasWorld() {
 
   // ─── GAMES ────────────────────────────────────────────────────────────
   // ─── REWARD TAB (standalone) ────────────────────────────────────────
+  const ChineseLevelTab = () => {
+    const levelSize = CHINESE_LEVEL_SIZES[chineseLevel - 1] || CHINESE_LEVEL_SIZES[0];
+    const chars = CHINESE_CHARS.slice(0, levelSize);
+    const safeIndex = Math.min(charIndex, chars.length - 1);
+    const ch = chars[safeIndex];
+    const learnedCount = chars.filter(c => learnedChineseChars[c.char]).length;
+    const canLevelUp = learnedCount === chars.length && chineseLevel < CHINESE_LEVEL_SIZES.length;
+    const learnedCurrent = Boolean(learnedChineseChars[ch.char]);
+    const markLearned = () => { setLearnedChineseChars(p => ({ ...p, [ch.char]: true })); addStars(1); };
+    const levelUp = () => { if (!canLevelUp) return; setChineseLevel(l => l + 1); setCharIndex(chars.length); addStars(5); };
+    return <div>
+      <div style={S.sectionHeader}><span>Chinese Characters</span><span style={{fontFamily:"'Fredoka',sans-serif",fontSize:12,color:"#F59E0B"}}>Level {chineseLevel}</span></div>
+      <div style={{padding:10,background:"linear-gradient(135deg,#FFFBEB,#FEF3C7)",borderRadius:12,marginBottom:10}}>
+        <div style={{display:"flex",justifyContent:"space-between",fontFamily:"'Fredoka',sans-serif",fontSize:12,fontWeight:700,color:"#92400E",marginBottom:6}}><span>{learnedCount}/{chars.length} learned</span><span>{chineseLevel < CHINESE_LEVEL_SIZES.length ? `${CHINESE_LEVEL_SIZES[chineseLevel] - chars.length} next` : "All levels open"}</span></div>
+        <div style={{height:7,borderRadius:4,background:"#FDE68A",overflow:"hidden"}}><div style={{height:"100%",width:`${(learnedCount / chars.length) * 100}%`,background:"linear-gradient(90deg,#34D399,#10B981)",borderRadius:4}} /></div>
+      </div>
+      <div style={{ display: "flex", gap: 4, marginBottom: 12, overflowX: "auto", paddingBottom: 4 }}>{chars.map((c, i) => <button key={i} onClick={() => setCharIndex(i)} style={{ position:"relative", minWidth: 38, height: 38, borderRadius: 8, border: "none", cursor: "pointer", fontSize: 18, fontFamily: "'Noto Sans SC',sans-serif", background: safeIndex === i ? "linear-gradient(135deg,#FBBF24,#F59E0B)" : learnedChineseChars[c.char] ? "#ECFDF5" : "#FFF7ED", color: safeIndex === i ? "#FFF" : learnedChineseChars[c.char] ? "#047857" : "#92400E", flexShrink: 0 }}>{c.char}{learnedChineseChars[c.char]&&<span style={{position:"absolute",right:2,bottom:1,fontSize:9,fontFamily:"'Fredoka',sans-serif"}}>✓</span>}</button>)}</div>
+      <div style={{ background: "#FFF", borderRadius: 16, padding: 14, boxShadow: "0 2px 8px rgba(0,0,0,.04)", marginBottom: 12 }}><div style={{ textAlign: "center", marginBottom: 12 }}><div style={{ fontFamily: "'Noto Sans SC',sans-serif", fontSize: 60, lineHeight: 1, color: "#1F2937" }}>{ch.char}</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 18, color: "#A78BFA", fontWeight: 600, marginTop: 2 }}>{ch.pinyin}</div><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 14, color: "#6B7280" }}>{ch.meaning}</div></div><CharacterPractice key={safeIndex} char={ch.char} strokeCount={ch.strokeCount} strokeNames={ch.strokeNames} /><div style={{ padding: 8, background: "#F0FDF4", borderRadius: 9, marginTop: 10, marginBottom: 6 }}><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 12, color: "#047857" }}>{ch.sentence}</div></div><div style={{ padding: 8, background: "#FFF7ED", borderRadius: 9 }}><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 11, color: "#A16207" }}>Tip: {ch.funFact}</div></div></div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 8 }}><button onClick={() => setCharIndex((safeIndex - 1 + chars.length) % chars.length)} style={{ ...BS, background: "#F3F4F6", color: "#6B7280" }}>Prev</button><button onClick={() => setCharIndex((safeIndex + 1) % chars.length)} style={{ ...BS, background: "linear-gradient(135deg,#FBBF24,#F59E0B)", color: "#FFF" }}>Next</button></div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}><button onClick={markLearned} disabled={learnedCurrent} style={{ ...BS, background: learnedCurrent ? "#D1FAE5" : "linear-gradient(135deg,#34D399,#059669)", color: learnedCurrent ? "#047857" : "#FFF" }}>{learnedCurrent ? "Learned" : "Mark Learned +1"}</button><button onClick={levelUp} disabled={!canLevelUp} style={{ ...BS, background: canLevelUp ? "linear-gradient(135deg,#A78BFA,#7C3AED)" : "#E5E7EB", color: canLevelUp ? "#FFF" : "#9CA3AF" }}>{chineseLevel < CHINESE_LEVEL_SIZES.length ? "Level Up +5" : "Top Level"}</button></div>
+    </div>;
+  };
+
   const claimReward = i => { if (totalStars >= rewards[i].stars && !claimedRewards[i]) { setTotalStars(s => s - rewards[i].stars); setClaimedRewards(p => ({ ...p, [i]: true })); } };
   const RewardTab = () => {
     return <div>
@@ -1613,15 +1806,38 @@ export default function AvasWorld() {
     </div>
   );
 
+  const MathPracticeTab = () => {
+    const cards = [
+      { name: "Math Quest", icon: "🏰", desc: "Arithmetic puzzles: add, subtract, and multiply", color: "#FF6B6B", type: "math" },
+      { name: "Math Applications", icon: "🛒", desc: "Grade 3 word problems with time, money, arrays, and measurement", color: "#10B981", type: "math-app" },
+      { name: "Shapes & Space", icon: "🔷", desc: "2-D and 3-D shapes, movement, and spatial relationships", color: "#3B82F6", type: "shapes" },
+    ];
+    return <div>
+      <div style={S.sectionHeader}><span>Math Practice</span><span style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 13, color: "#FBBF24" }}>⭐{totalStars}</span></div>
+      {cards.map(card => <div key={card.type} onClick={() => setActiveGame(card.type)} style={{ padding: 14, borderRadius: 14, cursor: "pointer", background: `${card.color}12`, border: `2px solid ${card.color}22`, marginBottom: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 11, background: `${card.color}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>{card.icon}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: "'Fredoka',sans-serif", fontWeight: 700, fontSize: 14, color: "#1F2937" }}>{card.name}</div>
+            <div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 11, color: "#6B7280", lineHeight: 1.25 }}>{card.desc}</div>
+          </div>
+          <div style={{ fontSize: 13, color: card.color }}>▶</div>
+        </div>
+      </div>)}
+    </div>;
+  };
+
   const StudyPanel = () => {
     if (activeGame === "math") return <MathGame onBack={() => setActiveGame(null)} onScore={handleMathScore} />;
+    if (activeGame === "math-app") return <MathApplicationGame onBack={() => setActiveGame(null)} onScore={handleMathScore} />;
+    if (activeGame === "shapes") return <ShapesGame onBack={() => setActiveGame(null)} onScore={handleMathScore} />;
     const tabs = [{ key: "math", icon: "🏰", label: "Math" }, { key: "chinese", icon: "🀄", label: "Chinese" }, { key: "stem", icon: "🔬", label: "STEM" }, { key: "schedule", icon: "📚", label: "Plan" }];
     return <div>
       <SubTabBar tabs={tabs} value={studySubTab} onChange={setStudySubTab} />
       {studySubTab === "schedule" && StudyTab()}
-      {studySubTab === "chinese" && ChineseTab()}
+      {studySubTab === "chinese" && <ChineseLevelTab />}
       {studySubTab === "stem" && <CraftTab onEarnStars={addStars} />}
-      {studySubTab === "math" && <MathQuestCard />}
+      {studySubTab === "math" && <MathPracticeTab />}
     </div>;
   };
 
@@ -1639,11 +1855,10 @@ export default function AvasWorld() {
   };
 
   const MorePanel = () => {
-    const tabs = [{ key: "games", icon: "🎮", label: "Game" }, { key: "news", icon: "📰", label: "News" }, { key: "love", icon: "💕", label: "Love" }];
+    const tabs = [{ key: "games", icon: "🎮", label: "Game" }, { key: "love", icon: "💕", label: "Love" }];
     return <div>
       <SubTabBar tabs={tabs} value={moreSubTab} onChange={setMoreSubTab} />
       {moreSubTab === "games" && <MoreGamesTab />}
-      {moreSubTab === "news" && NewsTab()}
       {moreSubTab === "love" && <LoveTab loveLog={loveLog} onKiss={handleKiss} onLoveYou={handleLoveYou} />}
     </div>;
   };
@@ -1655,8 +1870,9 @@ export default function AvasWorld() {
       case 2: return DiaryTab();
       case 3: return <ChatRoom account={account} />;
       case 4: return MusicTab();
-      case 5: return RewardTab();
-      case 6: return <MorePanel />;
+      case 5: return NewsTab();
+      case 6: return RewardTab();
+      case 7: return <MorePanel />;
       default: return HomeTab();
     }
   };
@@ -1682,12 +1898,12 @@ export default function AvasWorld() {
     <div style={S.app}>
       <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet" />
       {showStarAnim && <FloatingStars key={"star-"+showStarAnim} count={showStarAnim} onDone={() => setShowStarAnim(null)} />}
-      {showChat && <AiChat onClose={() => setShowChat(false)} />}
+      {showChat && <RobertChat onClose={() => setShowChat(false)} />}
       <div style={S.topBar}><div style={{ display: "flex", alignItems: "center", gap: 7 }}><div style={S.avatar}>{accountInitial}</div><div><div style={{ fontFamily: "'Fredoka',sans-serif", fontWeight: 700, fontSize: 15, color: "#1F2937" }}>Ava's World</div><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 9, color: "#9CA3AF" }}>Daily companion 🌸</div></div></div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 13, fontWeight: 700, color: "#FBBF24", padding: "3px 9px", background: "#FFFBEB", borderRadius: 7 }}>⭐{totalStars}</div></div>
       <div style={S.content}>{renderTab()}</div>
       <button onClick={() => setShowChat(true)} style={{ position: "fixed", bottom: 58, right: 14, width: 44, height: 44, borderRadius: 22, background: "linear-gradient(135deg,#7C3AED,#A78BFA)", border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(124,58,237,.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, zIndex: 100 }}>🤖</button>
       <div style={S.bottomNav}>
-        {TABS.map((tab, i) => <button key={i} onClick={() => { setActiveTab(i); setActiveGame(null); }} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 0, padding: "3px 0", border: "none", background: "transparent", cursor: "pointer", fontFamily: "'Fredoka',sans-serif", fontWeight: activeTab === i ? 600 : 400, color: activeTab === i ? "#7C3AED" : "#9CA3AF", minWidth: 0 }}><span style={{ fontSize: 14 }}>{tab}</span><span style={{ fontSize: 7, lineHeight: 1.2 }}>{TAB_LABELS[i]}</span>{activeTab === i && <div style={{ width: 8, height: 2, borderRadius: 1, background: "linear-gradient(90deg,#A78BFA,#7C3AED)", marginTop: 1 }} />}</button>)}
+        {TABS.map((tab, i) => <button key={i} onClick={() => { setActiveTab(i); setActiveGame(null); if (i === 7 && moreSubTab === "news") setMoreSubTab("games"); }} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 0, padding: "3px 0", border: "none", background: "transparent", cursor: "pointer", fontFamily: "'Fredoka',sans-serif", fontWeight: activeTab === i ? 600 : 400, color: activeTab === i ? "#7C3AED" : "#9CA3AF", minWidth: 0 }}><span style={{ position: "relative", fontSize: 14, lineHeight: 1 }}>{tab}{i === 3 && unreadChatCount > 0 && <span style={{ position: "absolute", top: -7, right: -10, minWidth: 14, height: 14, padding: "0 3px", borderRadius: 7, background: "#EF4444", color: "#FFF", fontFamily: "'Fredoka',sans-serif", fontSize: 8, fontWeight: 700, lineHeight: "14px", boxSizing: "border-box", border: "2px solid #FFF" }}>{unreadChatCount > 9 ? "9+" : unreadChatCount}</span>}</span><span style={{ fontSize: 7, lineHeight: 1.2 }}>{TAB_LABELS[i]}</span>{activeTab === i && <div style={{ width: 8, height: 2, borderRadius: 1, background: "linear-gradient(90deg,#A78BFA,#7C3AED)", marginTop: 1 }} />}</button>)}
       </div>
     </div>
   );
