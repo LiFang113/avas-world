@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   backendMode,
   createUserId,
+  findAccountByNameAge,
   loadChatMessages,
   loadFriends,
   mergeFriendsByName,
@@ -1079,16 +1080,24 @@ function ChatRoom({ account }) {
 
   // Save profile
   const saveProfile = async (name, av, accountAge = age, accountFriends = friends) => {
-    const profile = { name, age: accountAge, avatar: av, color: userColor.current, userId: userId.current, friends: accountFriends };
+    let existing = null;
+    try { existing = await findAccountByNameAge(name, accountAge); } catch {}
+    let linkedFriends = accountFriends;
+    try { if (existing && accountFriends.length === 0) linkedFriends = mergeFriendsByName((await loadFriends(existing.userId || existing.id)) || []); } catch {}
+    const profile = existing
+      ? { name: existing.name, age: existing.age, avatar: existing.avatar || av, color: existing.color || userColor.current, userId: existing.userId || existing.id, friends: linkedFriends }
+      : { name, age: accountAge, avatar: av, color: userColor.current, userId: userId.current, friends: linkedFriends };
+    userId.current = profile.userId;
+    userColor.current = profile.color;
     try {
       await window.storage.set("chat-profile", JSON.stringify(profile));
-      await saveAccount({ id: profile.userId, userId: profile.userId, name, age: accountAge, avatar: av, color: profile.color });
-      await saveFriends(profile.userId, accountFriends);
+      await saveAccount({ id: profile.userId, userId: profile.userId, name: profile.name, age: profile.age, avatar: profile.avatar, color: profile.color });
+      await saveFriends(profile.userId, linkedFriends);
     } catch {}
-    setNickname(name);
-    setAvatar(av);
-    setAge(accountAge);
-    setFriends(accountFriends);
+    setNickname(profile.name);
+    setAvatar(profile.avatar);
+    setAge(profile.age);
+    setFriends(linkedFriends);
     window.dispatchEvent(new CustomEvent("ava-profile-created"));
   };
 
@@ -1470,7 +1479,18 @@ export default function AvasWorld() {
   }, []);
 
   const createAccount = async ({ name, age, avatar }) => {
-    const profile = {
+    let existing = null;
+    try { existing = await findAccountByNameAge(name, age); } catch {}
+    let existingFriends = [];
+    try { if (existing) existingFriends = mergeFriendsByName((await loadFriends(existing.userId || existing.id)) || []); } catch {}
+    const profile = existing ? {
+      name: existing.name,
+      age: existing.age,
+      avatar: existing.avatar || avatar,
+      color: existing.color || CHAT_COLORS[Math.floor(Math.random() * CHAT_COLORS.length)],
+      userId: existing.userId || existing.id,
+      friends: existingFriends,
+    } : {
       name,
       age,
       avatar,
@@ -1480,8 +1500,8 @@ export default function AvasWorld() {
     };
     try {
       await window.storage.set("chat-profile", JSON.stringify(profile));
-      await saveAccount({ id: profile.userId, userId: profile.userId, name, age, avatar, color: profile.color });
-      await saveFriends(profile.userId, []);
+      await saveAccount({ id: profile.userId, userId: profile.userId, name: profile.name, age: profile.age, avatar: profile.avatar, color: profile.color });
+      await saveFriends(profile.userId, profile.friends);
     } catch {}
     setAccount(profile);
     setHasAccount(true);

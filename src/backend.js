@@ -49,7 +49,7 @@ const getLocalAccounts = () => readLocalJson("ava-accounts") || [];
 const saveLocalAccount = account => {
   const nextAccount = { ...account, id: account.id || account.userId, searchName: normalizeAccountName(account.name), updatedAt: Date.now() };
   const accounts = getLocalAccounts();
-  const idx = accounts.findIndex(a => a.id === nextAccount.id || a.searchName === nextAccount.searchName);
+  const idx = accounts.findIndex(a => a.id === nextAccount.id || ((a.searchName || normalizeAccountName(a.name)) === nextAccount.searchName && Number(a.age) === Number(nextAccount.age)));
   const next = idx >= 0 ? accounts.map((a, i) => i === idx ? { ...a, ...nextAccount } : a) : [...accounts, nextAccount];
   writeLocalJson("ava-accounts", next);
   return nextAccount;
@@ -61,6 +61,29 @@ export const saveAccount = async account => {
   const { error } = await supabase.from("ava_accounts").upsert(accountToRow(account));
   if (error) throw error;
   return localAccount;
+};
+
+export const findAccountByNameAge = async (name, age) => {
+  const searchName = normalizeAccountName(name);
+  const accountAge = Number(age) || null;
+  if (!searchName || !accountAge) return null;
+
+  if (supabase) {
+    const { data, error } = await supabase
+      .from("ava_accounts")
+      .select("id,name,search_name,age,avatar,color")
+      .eq("search_name", searchName)
+      .eq("age", accountAge)
+      .order("updated_at", { ascending: false })
+      .limit(1);
+    if (error) throw error;
+    return data?.[0] ? rowToAccount(data[0]) : null;
+  }
+
+  const match = getLocalAccounts()
+    .filter(a => (a.searchName || normalizeAccountName(a.name)) === searchName && Number(a.age) === accountAge)
+    .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))[0];
+  return match || null;
 };
 
 export const searchAccounts = async (query, currentUserId, friendIds = []) => {
