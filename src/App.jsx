@@ -1527,6 +1527,28 @@ export default function AvasWorld() {
     window.dispatchEvent(new CustomEvent("ava-profile-created"));
   };
 
+  const logoutAccount = async () => {
+    try { await window.storage.delete("chat-profile"); } catch {}
+    setAccount(null);
+    setHasAccount(false);
+    setShowAccountInfo(false);
+    setActiveTab(0);
+    setActiveGame(null);
+    setTotalStars(0);
+    setCompletedTasks({});
+    setUnlockedItems({});
+    setLoveLog(INITIAL_LOVE_LOG);
+    setDiaryEntries([{id:1,date:"2026-02-07",text:"Learned Chinese character for 'love'!",mood:":)",images:[],tags:["chinese"]},{id:2,date:"2026-02-06",text:"Octopuses have 3 hearts!",mood:":D",images:[],tags:["science"]}]);
+    setRewards(DEFAULT_REWARDS);
+    setClaimedRewards({});
+    setSongs(DEFAULT_SONGS);
+    setCharIndex(0);
+    setChineseLevel(1);
+    setLearnedChineseChars({});
+    setNewsStories([]);
+    setSolvedRiddles({});
+  };
+
   // ─── AUTO-SAVE WHEN DATA CHANGES ──────────────────────────────────
   useEffect(() => {
     if (!dataLoaded || !hasAccount || !account?.userId) return;
@@ -1941,7 +1963,7 @@ export default function AvasWorld() {
       <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet" />
       {showStarAnim && <FloatingStars key={"star-"+showStarAnim} count={showStarAnim} onDone={() => setShowStarAnim(null)} />}
       {showChat && <RobertChat onClose={() => setShowChat(false)} />}
-      <div style={S.topBar}><div onClick={() => setShowAccountInfo(v => !v)} style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer", position: "relative" }}><div style={S.avatar}>{accountInitial}</div><div><div style={{ fontFamily: "'Fredoka',sans-serif", fontWeight: 700, fontSize: 15, color: "#1F2937" }}>Ava's World</div><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 9, color: "#9CA3AF" }}>Daily companion ??</div></div>{showAccountInfo && <div style={{ position: "absolute", top: 42, left: 0, zIndex: 200, width: 188, padding: 10, borderRadius: 12, background: "#FFF", boxShadow: "0 8px 24px rgba(0,0,0,.14)", border: "1px solid #F3F4F6" }}><div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}><div style={{ ...S.avatar, width: 30, height: 30, borderRadius: 9, fontSize: 12 }}>{accountInitial}</div><div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 14, fontWeight: 700, color: "#1F2937" }}>{account?.name || "Ava"}</div><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 11, color: "#6B7280" }}>Age {account?.age || "?"}</div></div></div><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 9, color: "#9CA3AF", wordBreak: "break-all" }}>{account?.userId ? "ID: " + account.userId : "Local account"}</div></div>}</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 13, fontWeight: 700, color: "#FBBF24", padding: "3px 9px", background: "#FFFBEB", borderRadius: 7 }}>?{totalStars}</div></div>
+      <div style={S.topBar}><div onClick={() => setShowAccountInfo(v => !v)} style={{ display: "flex", alignItems: "center", gap: 7, cursor: "pointer", position: "relative" }}><div style={S.avatar}>{accountInitial}</div><div><div style={{ fontFamily: "'Fredoka',sans-serif", fontWeight: 700, fontSize: 15, color: "#1F2937" }}>Ava's World</div><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 9, color: "#9CA3AF" }}>Daily companion</div></div>{showAccountInfo && <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: 42, left: 0, zIndex: 200, width: 188, padding: 10, borderRadius: 12, background: "#FFF", boxShadow: "0 8px 24px rgba(0,0,0,.14)", border: "1px solid #F3F4F6" }}><div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}><div style={{ ...S.avatar, width: 30, height: 30, borderRadius: 9, fontSize: 12 }}>{accountInitial}</div><div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 14, fontWeight: 700, color: "#1F2937" }}>{account?.name || "Ava"}</div><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 11, color: "#6B7280" }}>Age {account?.age || "?"}</div></div></div><div style={{ fontFamily: "'Nunito',sans-serif", fontSize: 9, color: "#9CA3AF", wordBreak: "break-all", marginBottom: 8 }}>{account?.userId ? "ID: " + account.userId : "Local account"}</div><button onClick={logoutAccount} style={{ width: "100%", padding: "7px 10px", borderRadius: 9, border: "none", background: "#FEF2F2", color: "#DC2626", fontFamily: "'Fredoka',sans-serif", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>Log out</button></div>}</div><div style={{ fontFamily: "'Fredoka',sans-serif", fontSize: 13, fontWeight: 700, color: "#FBBF24", padding: "3px 9px", background: "#FFFBEB", borderRadius: 7 }}>{totalStars}</div></div>
       <div onClick={() => showAccountInfo && setShowAccountInfo(false)} style={S.content}>{renderTab()}</div>
       <button onClick={() => setShowChat(true)} style={{ position: "fixed", bottom: 58, right: 14, width: 44, height: 44, borderRadius: 22, background: "linear-gradient(135deg,#7C3AED,#A78BFA)", border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(124,58,237,.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, zIndex: 100 }}>🤖</button>
       <div style={S.bottomNav}>
@@ -1952,7 +1974,7 @@ export default function AvasWorld() {
 }
 
 const S = {
-  app: { maxWidth: 420, margin: "0 auto", minHeight: "100vh", background: "#FAFAFA", display: "flex", flexDirection: "column", fontFamily: "'Nunito',sans-serif", borderRadius: 24, overflowX: "hidden", overflowY: "auto", boxShadow: "0 4px 40px rgba(0,0,0,.08)", position: "relative" },
+  app: { width: "100vw", maxWidth: "none", margin: 0, minHeight: "100dvh", background: "#FAFAFA", display: "flex", flexDirection: "column", fontFamily: "'Nunito',sans-serif", borderRadius: 0, overflowX: "hidden", overflowY: "auto", boxShadow: "none", position: "relative" },
   topBar: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "11px 14px", background: "#FFF", borderBottom: "1px solid #F3F4F6" },
   avatar: { width: 32, height: 32, borderRadius: 9, background: "linear-gradient(135deg,#A78BFA,#F472B6)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFF", fontFamily: "'Fredoka',sans-serif", fontWeight: 700, fontSize: 13 },
   content: { flex: 1, padding: "10px 12px", overflowY: "auto", paddingBottom: 66, WebkitOverflowScrolling: "touch" },
