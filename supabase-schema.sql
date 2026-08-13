@@ -40,10 +40,18 @@ create table if not exists public.ava_presence (
   last_seen_ms bigint not null
 );
 
+create table if not exists public.ava_user_data (
+  user_id text primary key references public.ava_accounts(id) on delete cascade,
+  data jsonb not null default '{}',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.ava_accounts enable row level security;
 alter table public.ava_friendships enable row level security;
 alter table public.ava_messages enable row level security;
 alter table public.ava_presence enable row level security;
+alter table public.ava_user_data enable row level security;
 
 create policy "Ava accounts are searchable"
   on public.ava_accounts for select
@@ -88,5 +96,18 @@ create policy "Ava presence can be written"
 
 create policy "Ava presence can be updated"
   on public.ava_presence for update
+  using (true)
+  with check (true);
+
+create policy "Ava user data is readable"
+  on public.ava_user_data for select
+  using (true);
+
+create policy "Ava user data can be created"
+  on public.ava_user_data for insert
+  with check (true);
+
+create policy "Ava user data can be updated"
+  on public.ava_user_data for update
   using (true)
   with check (true);

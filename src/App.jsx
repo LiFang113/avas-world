@@ -5,11 +5,13 @@ import {
   findAccountByNameAge,
   loadChatMessages,
   loadFriends,
+  loadUserData,
   mergeFriendsByName,
   normalizeAccountName,
   resolveRecipientIds,
   saveAccount,
   saveFriends,
+  saveUserData,
   searchAccounts,
   sendChatMessage,
   updatePresence,
@@ -1424,6 +1426,27 @@ export default function AvasWorld() {
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const chatBaselineRef = useRef(null);
   const chatUnreadIdsRef = useRef(new Set());
+  const applySavedWorldData = useCallback(d => {
+    if (!d) return;
+    if (d.totalStars !== undefined) setTotalStars(d.totalStars);
+    if (d.completedTasks) setCompletedTasks(d.completedTasks);
+    if (d.unlockedItems) setUnlockedItems(d.unlockedItems);
+    if (d.loveLog) setLoveLog(d.loveLog);
+    if (d.diaryEntries) setDiaryEntries(d.diaryEntries);
+    if (d.rewards) setRewards(d.rewards);
+    if (d.claimedRewards) setClaimedRewards(d.claimedRewards);
+    if (d.songs) setSongs(d.songs);
+    if (d.charIndex !== undefined) setCharIndex(d.charIndex);
+    if (d.chineseLevel) setChineseLevel(Math.min(CHINESE_LEVEL_SIZES.length, Math.max(1, d.chineseLevel)));
+    if (d.learnedChineseChars) setLearnedChineseChars(d.learnedChineseChars);
+    if (d.newsStories) setNewsStories(d.newsStories);
+    if (d.solvedRiddles) setSolvedRiddles(d.solvedRiddles);
+  }, []);
+  const buildWorldData = useCallback(() => ({
+    totalStars, completedTasks, unlockedItems, loveLog,
+    diaryEntries, rewards, claimedRewards, songs, charIndex,
+    chineseLevel, learnedChineseChars, newsStories, solvedRiddles,
+  }), [totalStars, completedTasks, unlockedItems, loveLog, diaryEntries, rewards, claimedRewards, songs, charIndex, chineseLevel, learnedChineseChars, newsStories, solvedRiddles]);
 
   // ─── LOAD SAVED DATA ON MOUNT ──────────────────────────────────────
   useEffect(() => {
@@ -1440,23 +1463,14 @@ export default function AvasWorld() {
           }
         }
         if (accountExists) {
-          const result = await window.storage.get("ava-world-data");
-          if (result && result.value) {
-            const d = JSON.parse(result.value);
-            if (d.totalStars !== undefined) setTotalStars(d.totalStars);
-            if (d.completedTasks) setCompletedTasks(d.completedTasks);
-            if (d.unlockedItems) setUnlockedItems(d.unlockedItems);
-            if (d.loveLog) setLoveLog(d.loveLog);
-            if (d.diaryEntries) setDiaryEntries(d.diaryEntries);
-            if (d.rewards) setRewards(d.rewards);
-            if (d.claimedRewards) setClaimedRewards(d.claimedRewards);
-            if (d.songs) setSongs(d.songs);
-            if (d.charIndex !== undefined) setCharIndex(d.charIndex);
-            if (d.chineseLevel) setChineseLevel(Math.min(CHINESE_LEVEL_SIZES.length, Math.max(1, d.chineseLevel)));
-            if (d.learnedChineseChars) setLearnedChineseChars(d.learnedChineseChars);
-            if (d.newsStories) setNewsStories(d.newsStories);
-            if (d.solvedRiddles) setSolvedRiddles(d.solvedRiddles);
+          const savedProfile = JSON.parse(profile.value);
+          let savedData = null;
+          try { savedData = await loadUserData(savedProfile.userId); } catch {}
+          if (!savedData) {
+            const result = await window.storage.get("ava-world-data");
+            if (result?.value) savedData = JSON.parse(result.value);
           }
+          applySavedWorldData(savedData);
         }
       } catch (e) {
         // First time or storage unavailable — use defaults
@@ -1503,6 +1517,10 @@ export default function AvasWorld() {
       await saveAccount({ id: profile.userId, userId: profile.userId, name: profile.name, age: profile.age, avatar: profile.avatar, color: profile.color });
       await saveFriends(profile.userId, profile.friends);
     } catch {}
+    try {
+      const savedData = await loadUserData(profile.userId);
+      if (savedData) applySavedWorldData(savedData);
+    } catch {}
     setAccount(profile);
     setHasAccount(true);
     window.dispatchEvent(new CustomEvent("ava-profile-created"));
@@ -1510,17 +1528,16 @@ export default function AvasWorld() {
 
   // ─── AUTO-SAVE WHEN DATA CHANGES ──────────────────────────────────
   useEffect(() => {
-    if (!dataLoaded || !hasAccount) return;
+    if (!dataLoaded || !hasAccount || !account?.userId) return;
     const save = async () => {
+      const worldData = buildWorldData();
       try {
-        await window.storage.set("ava-world-data", JSON.stringify({
-          totalStars, completedTasks, unlockedItems, loveLog,
-          diaryEntries, rewards, claimedRewards, songs, charIndex, chineseLevel, learnedChineseChars, newsStories, solvedRiddles
-        }));
+        await window.storage.set("ava-world-data", JSON.stringify(worldData));
+        await saveUserData(account.userId, worldData);
       } catch (e) { /* storage unavailable */ }
     };
     save();
-  }, [dataLoaded, hasAccount, totalStars, completedTasks, unlockedItems, loveLog, diaryEntries, rewards, claimedRewards, songs, charIndex, chineseLevel, learnedChineseChars, newsStories, solvedRiddles]);
+  }, [dataLoaded, hasAccount, account?.userId, buildWorldData]);
 
   const now = new Date();
   const greetingTime = now.getHours() < 12 ? "Good Morning" : now.getHours() < 17 ? "Good Afternoon" : "Good Evening";

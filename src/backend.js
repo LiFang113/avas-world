@@ -157,6 +157,32 @@ export const saveFriends = async (userId, friends) => {
   if (error) throw error;
 };
 
+export const loadUserData = async userId => {
+  if (!userId) return null;
+  if (!supabase) return readLocalJson(`ava-world-data-${userId}`) || readLocalJson("ava-world-data");
+
+  const { data, error } = await supabase
+    .from("ava_user_data")
+    .select("data")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.data || null;
+};
+
+export const saveUserData = async (userId, data) => {
+  if (!userId) return;
+  writeLocalJson(`ava-world-data-${userId}`, data);
+  if (!supabase) return;
+
+  const { error } = await supabase.from("ava_user_data").upsert({
+    user_id: userId,
+    data,
+    updated_at: new Date().toISOString(),
+  });
+  if (error) throw error;
+};
+
 const rowToMessage = row => ({
   id: row.id,
   userId: row.user_id,
